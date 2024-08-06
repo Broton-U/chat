@@ -1,34 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Chat</title>
-  <link rel="stylesheet" type="text/css" href="chat.css">
+  <title>Who Dis</title>
+  <link rel="stylesheet" type="text/css" href="login.css">
 </head>
 <body>
-  <div id="chatContainer" style="display: none;">
-    <div id="messages" class="messages"></div>
-    <input type="text" id="messageInput" placeholder="Type a message" onkeypress="if(event.key === 'Enter') sendMessage()">
-    <button onclick="sendMessage()">Secret</button>
-  </div>
+  <div id="loginSignupContainer">
+    <div id="loginForm" class="form-container">
+      <h2>Login</h2>
+      <label for="loginName">Name:</label>
+      <input type="text" id="loginName" name="loginName" placeholder="Enter your name">
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" placeholder="Enter your password">
+      <button onclick="login()">Login</button>
+      <button onclick="showSignup()">Sign Up</button>
+    </div>
 
-  <div id="beastmodePopup" class="popup">
-    <div class="popup-content">
-      <h2>Beast Mode</h2>
-      <div class="roles">
-        <button onclick="setRole('admin')" style="background-color: red;">Admin</button>
-        <button onclick="setRole('autistic')" style="background-color: darkblue;">Autistic</button>
-        <button onclick="setRole('idiots')" style="background-color: purple;">Idiots</button>
-        <button onclick="setRole('default')" style="background-color: grey;">Default</button>
-      </div>
-      <div class="actions">
-        <button onclick="clearChat()" style="background-color: teal;">Clear Chat</button>
-        <button onclick="lockChat()" style="background-color: red;">Lock Chat</button>
-        <button onclick="unlockChat()" style="background-color: green;">Unlock Chat</button>
-        <button onclick="redirectChat()" style="background-color: white;">Redirect Chat</button>
-      </div>
-      <div class="done">
-        <button onclick="closeBeastMode()">Done</button>
-      </div>
+    <div id="signupForm" class="form-container" style="display: none;">
+      <h2>Sign Up</h2>
+      <label for="signupName">Name:</label>
+      <input type="text" id="signupName" name="signupName" placeholder="Enter your name">
+      <label for="signupPassword">Password:</label>
+      <input type="password" id="signupPassword" name="signupPassword" placeholder="Enter your password">
+      <button onclick="signup()">Sign Up</button>
+      <button onclick="showLogin()">Login</button>
     </div>
   </div>
 
@@ -36,166 +31,134 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      try {
-        const firebaseConfig = {
-  apiKey: "AIzaSyDB2sNW2w-kvwOaqYJ-6Pojd79j1rRzgDw",
-  authDomain: "chat-71251.firebaseapp.com",
-  databaseURL: "https://chat-71251-default-rtdb.firebaseio.com",
-  projectId: "chat-71251",
-  storageBucket: "chat-71251.appspot.com",
-  messagingSenderId: "290327153997"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        const messagesRef = database.ref('messages');
-        const usersRef = database.ref('users');
-        const clearChatRef = database.ref('clearChatFlag');
-        const redirectChatRef = database.ref('redirectChatFlag');
+      function getUserUUID() {
+        var uuid = "";
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+          var cookie = cookies[i].trim();
+          if (cookie.startsWith("userUUID=")) {
+            uuid = cookie.substring("userUUID=".length);
+            break;
+          }
+        }
+        return uuid;
+      }
 
-        function getUserUUID() {
-          const cookies = document.cookie.split(';');
-          for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.startsWith("userUUID=")) {
-              return cookie.substring("userUUID=".length);
+      var uuid = getUserUUID();
+      if (uuid) {
+        window.location.href = 'chat.html';
+      }
+
+      // Firebase configuration
+      var firebaseConfig = {
+        apiKey: "your-api-key",
+        authDomain: "your-auth-domain",
+        projectId: "your-project-id",
+        storageBucket: "your-storage-bucket",
+        messagingSenderId: "your-messaging-sender-id",
+        appId: "your-app-id",
+        databaseURL: "your-database-url"
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      var database = firebase.database();
+      var usersRef = database.ref('users');
+
+      function showLogin() {
+        document.getElementById('loginForm').style.display = 'block';
+        document.getElementById('signupForm').style.display = 'none';
+      }
+
+      function showSignup() {
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('signupForm').style.display = 'block';
+      }
+
+      function login() {
+        var loginName = document.getElementById('loginName').value.trim();
+        var password = document.getElementById('password').value.trim();
+        if (loginName && password) {
+          var lowerCaseName = loginName.toLowerCase();
+          authenticateUser(lowerCaseName, password, function(success, userUUID) {
+            if (success) {
+              document.cookie = "userUUID=" + userUUID + ";path=/";
+              window.location.href = 'chat.html';
+            } else {
+              alert("Invalid name or password.");
             }
-          }
-          return "";
+          });
+        } else {
+          alert("Please enter both name and password.");
         }
+      }
 
-        function loadMessages() {
-          const messagesDiv = document.getElementById('messages');
-          messagesRef.orderByChild('timestamp').once('value', function(snapshot) {
-            messagesDiv.innerHTML = '';
-            snapshot.forEach(function(childSnapshot) {
-              const messageData = childSnapshot.val();
-              usersRef.child(messageData.uuid).once('value', function(userSnapshot) {
-                const userData = userSnapshot.val();
-                const userName = userData ? userData.name : 'Unknown';
-                const userRole = userData ? userData.role : 'default';
-                const messageElement = document.createElement('div');
-                messageElement.textContent = userName + ": " + messageData.message;
-                messageElement.className = 'message ' + userRole + (messageData.uuid === getUserUUID() ? ' self' : '');
-                messagesDiv.appendChild(messageElement);
+      function signup() {
+        var signupName = document.getElementById('signupName').value.trim();
+        var signupPassword = document.getElementById('signupPassword').value.trim();
+        if (signupName && signupPassword) {
+          var lowerCaseName = signupName.toLowerCase();
+          checkUserName(lowerCaseName, function(exists) {
+            if (exists) {
+              alert("Name taken, please choose another.");
+            } else {
+              var userUUID = generateUUID();
+              document.cookie = "userUUID=" + userUUID + ";path=/";
+              usersRef.child(userUUID).set({
+                name: signupName,
+                nameLower: lowerCaseName,
+                role: "default",
+                password: signupPassword
+              }, function(error) {
+                if (error) {
+                  alert("Error creating user.");
+                } else {
+                  window.location.href = 'chat.html';
+                }
               });
-            });
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
           });
+        } else {
+          alert("Please enter both name and password.");
         }
+      }
 
-        function sendMessage() {
-          const messageInput = document.getElementById('messageInput');
-          const message = messageInput.value.trim();
-          const userUUID = getUserUUID();
-          if (message !== '' && userUUID) {
-            messagesRef.push().set({
-              message: message,
-              uuid: userUUID,
-              timestamp: Date.now()
-            });
-            messageInput.value = '';
-          }
-        }
-
-        function clearChat() {
-          messagesRef.remove().then(function() {
-            messagesRef.push().set({
-              message: "Chat cleared",
-              uuid: "3ba4223a-e921-474f-b8ec-1b34d081ba9f",
-              timestamp: Date.now()
-            }).then(function() {
-              clearChatRef.set(true);
-            });
-          });
-        }
-
-        function lockChat() {
-          sendLockUnlockMessage("CHAT IS LOCKED");
-        }
-
-        function unlockChat() {
-          sendLockUnlockMessage("CHAT IS UNLOCKED");
-        }
-
-        function sendLockUnlockMessage(text) {
-          messagesRef.push().set({
-            message: text,
-            uuid: "3ba4223a-e921-474f-b8ec-1b34d081ba9f",
-            timestamp: Date.now()
-          });
-        }
-
-        function redirectChat() {
-          redirectChatRef.set(true);
-        }
-
-        clearChatRef.on('value', function(snapshot) {
-          if (snapshot.val() === true) {
-            clearChatRef.set(false);
-            location.reload();
-          }
+      function checkUserName(userName, callback) {
+        var query = usersRef.orderByChild('nameLower').equalTo(userName);
+        query.once('value', function(snapshot) {
+          callback(snapshot.exists());
         });
+      }
 
-        redirectChatRef.on('value', function(snapshot) {
-          if (snapshot.val() === true) {
-            redirectChatRef.set(false);
-            window.location.href = 'rr.mp4';
-          }
-        });
-
-        function setRole(role) {
-          const userUUID = getUserUUID();
-          if (userUUID) {
-            usersRef.child(userUUID).update({ role: role }, function(error) {
-              if (error) {
-                alert("Error updating role.");
+      function authenticateUser(userName, password, callback) {
+        var query = usersRef.orderByChild('nameLower').equalTo(userName);
+        query.once('value', function(snapshot) {
+          if (snapshot.exists()) {
+            snapshot.forEach(function(childSnapshot) {
+              var userData = childSnapshot.val();
+              if (userData.password === password) {
+                callback(true, childSnapshot.key);
               } else {
-                alert("Role updated to: " + role);
+                callback(false, null);
               }
             });
           } else {
-            alert("User not found.");
-          }
-        }
-
-        function showBeastmode() {
-          const popup = document.getElementById('beastmodePopup');
-          popup.style.display = 'block';
-        }
-
-        function closeBeastMode() {
-          const popup = document.getElementById('beastmodePopup');
-          popup.style.display = 'none';
-        }
-
-        function redirectToChatIfLoggedIn() {
-          const uuid = getUserUUID();
-          if (uuid) {
-            window.location.href = 'chat.html';
-          }
-        }
-
-        redirectToChatIfLoggedIn();
-        loadMessages();
-
-        document.addEventListener('keydown', function(event) {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            sendMessage();
+            callback(false, null);
           }
         });
-
-        window.showBeastmode = showBeastmode;
-        window.closeBeastMode = closeBeastMode;
-        window.setRole = setRole;
-        window.clearChat = clearChat;
-        window.lockChat = lockChat;
-        window.unlockChat = unlockChat;
-        window.redirectChat = redirectChat;
-      } catch (error) {
-        console.error("Error initializing chat:", error);
-        document.body.innerHTML = `<p style="color: red;">An error occurred: ${error.message}</p>`;
       }
+
+      function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
+      }
+
+      window.login = login;
+      window.signup = signup;
+      window.showLogin = showLogin;
+      window.showSignup = showSignup;
     });
   </script>
 </body>
