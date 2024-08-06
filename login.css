@@ -54,6 +54,7 @@ body::before {
   margin-bottom: 20px; /* Add more space below the heading */
   margin-left: 50px;
   font-weight: bold;
+  position: absolute;
 }
 
 .form-container label,
