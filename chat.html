@@ -95,10 +95,20 @@ function displayMessages() {
 
   // Fetch messages ordered by timestamp in ascending order
   messagesRef.orderByChild('timestamp').on('value', function(snapshot) {
-    messagesDiv.innerHTML = ''; // Clear previous messages
+    var messagesArray = [];
 
     snapshot.forEach(function(childSnapshot) {
       var messageData = childSnapshot.val();
+      messagesArray.push(messageData);
+    });
+
+    // Sort messages by timestamp (ascending)
+    messagesArray.sort(function(a, b) {
+      return a.timestamp - b.timestamp;
+    });
+
+    // Display messages
+    messagesArray.forEach(function(messageData) {
       usersRef.child(messageData.uuid).once('value', function(userSnapshot) {
         var userData = userSnapshot.val();
         var userName = userData ? userData.name : 'Unknown';
@@ -164,6 +174,7 @@ window.accessSecretChat = accessSecretChat;
 window.clearChat = clearChat;
 window.showBeastmode = showBeastmode;
 window.closeBeastMode = closeBeastMode;
+
  </script>
 </body>
 </html>
