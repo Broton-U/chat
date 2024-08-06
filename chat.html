@@ -127,6 +127,7 @@
       // Listen for redirectChatFlag changes
       redirectChatRef.on('value', function(snapshot) {
         if (snapshot.val() === true) {
+          redirectChatRef.set(false); // Reset the flag
           window.location.href = 'rr.mp4';
         }
       });
