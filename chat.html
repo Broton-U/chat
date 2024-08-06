@@ -5,33 +5,213 @@
   <link rel="stylesheet" type="text/css" href="chat.css">
 </head>
 <body>
-  <div id="chatContainer">
-    <div id="messages" class="messages"></div>
-    <textarea id="messageInput" placeholder="Type a message"></textarea>
-    <button id="sendButton" onclick="sendMessage()">Send</button>
-    <button id="secretButton" onclick="accessSecretChat()">Secret</button>
+  <div id="chatContainer" style="display: none;">
+    <div id="messages"></div>
+    <div id="messageInputContainer">
+      <input type="text" id="messageInput" placeholder="Type a message...">
+      <button onclick="accessSecretChat()">Secret</button>
+    </div>
   </div>
-
   <div id="beastmodePopup" class="popup">
     <div class="popup-content">
       <div class="roles">
-        <button onclick="setRole('admin')">Admin</button>
-        <button onclick="setRole('autistic')">Autistic</button>
-        <button onclick="setRole('idiots')">Idiots</button>
-        <button onclick="setRole('default')">Default</button>
+        <button class="role-button admin-role" onclick="setRole('admin')">Admin</button>
+        <button class="role-button autistic-role" onclick="setRole('autistic')">Autistic</button>
+        <button class="role-button idiots-role" onclick="setRole('idiots')">Idiots</button>
+        <button class="role-button default-role" onclick="setRole('default')">Default</button>
       </div>
       <div class="actions">
-        <button onclick="clearChat()" class="clear-chat">Clear Chat</button>
-        <button onclick="lockChat()" class="lock-chat">Lock Chat</button>
-        <button onclick="unlockChat()" class="unlock-chat">Unlock Chat</button>
-        <button onclick="redirectChat()" class="redirect-chat">Redirect</button>
+        <button class="action-button clear-chat" onclick="clearChat()">Clear Chat</button>
+        <button class="action-button lock-chat" onclick="lockChat()">Lock Chat</button>
+        <button class="action-button unlock-chat" onclick="unlockChat()">Unlock Chat</button>
+        <button class="action-button redirect-chat" onclick="redirectChat()">Redirect Chat</button>
       </div>
-      <button onclick="closeBeastMode()" class="done-button">Done</button>
+      <div class="done">
+        <button class="done-button" onclick="closeBeastMode()">Done</button>
+      </div>
     </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <script src="chat.js"></script>
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyDB2sNW2w-kvwOaqYJ-6Pojd79j1rRzgDw",
+      authDomain: "chat-71251.firebaseapp.com",
+      databaseURL: "https://chat-71251-default-rtdb.firebaseio.com",
+      projectId: "chat-71251",
+      storageBucket: "chat-71251.appspot.com",
+      messagingSenderId: "290327153997"
+    });
+
+    var database = firebase.database();
+    var messagesRef = database.ref('messages');
+    var usersRef = database.ref('users');
+    var clearChatRef = database.ref('clearChatFlag');
+    var lockChatRef = database.ref('lockChatFlag');
+    var redirectChatRef = database.ref('redirectChatFlag');
+
+    function getUserUUID() {
+      var uuid = "";
+      var cookies = document.cookie.split(';');
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i].trim();
+        if (cookie.startsWith("userUUID=")) {
+          uuid = cookie.substring("userUUID=".length);
+          break;
+        }
+      }
+      return uuid;
+    }
+
+    function checkUUID() {
+      var uuid = getUserUUID();
+      if (!uuid) {
+        window.location.href = 'index.html';
+      } else {
+        document.getElementById('chatContainer').style.display = 'flex';
+        displayMessages();
+      }
+    }
+
+    function sendMessage() {
+      var messageInput = document.getElementById('messageInput');
+      var message = messageInput.value.trim();
+      var userUUID = getUserUUID();
+      if (message !== '' && userUUID) {
+        messagesRef.push().set({
+          message: message,
+          uuid: userUUID,
+          timestamp: Date.now()
+        });
+        messageInput.value = '';
+      }
+    }
+
+    function displayMessages() {
+      var messagesDiv = document.getElementById('messages');
+      messagesDiv.innerHTML = ''; // Clear previous messages
+      messagesRef.orderByChild('timestamp').on('child_added', function(snapshot) {
+        var messageData = snapshot.val();
+        usersRef.child(messageData.uuid).once('value', function(userSnapshot) {
+          var userData = userSnapshot.val();
+          var userName = userData ? userData.name : 'Unknown';
+          var userRole = userData ? userData.role : 'default';
+          var messageElement = document.createElement('div');
+          messageElement.textContent = userName + ": " + messageData.message;
+          messageElement.className = 'message ' + userRole + (messageData.uuid === getUserUUID() ? ' self' : '');
+          messagesDiv.appendChild(messageElement);
+          messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to bottom
+        });
+      });
+
+      // Listen for clearChatFlag changes
+      clearChatRef.on('value', function(snapshot) {
+        if (snapshot.val() === true) {
+          clearChatRef.set(false); // Reset the flag
+          location.reload(); // Refresh the page for all users
+        }
+      });
+
+      // Listen for lockChatFlag changes
+      lockChatRef.on('value', function(snapshot) {
+        if (snapshot.val() === true) {
+          document.getElementById('messageInput').disabled = true;
+          document.getElementById('messageInput').placeholder = 'CHAT IS LOCKED';
+        } else {
+          document.getElementById('messageInput').disabled = false;
+          document.getElementById('messageInput').placeholder = 'Type a message...';
+        }
+      });
+
+      // Listen for redirectChatFlag changes
+      redirectChatRef.on('value', function(snapshot) {
+        if (snapshot.val() === true) {
+          redirectChatRef.set(false); // Reset the flag
+          window.location.href = 'rr.mp4';
+        }
+      });
+    }
+
+    function accessSecretChat() {
+      if (document.cookie.split(';').some((item) => item.trim().startsWith('cpizza='))) {
+        window.location.href = 'chickenchat.html';
+      } else {
+        var passcode = prompt("Enter passcode:");
+        if (passcode && passcode.trim().toUpperCase() === 'PUTTHECHICKENONTHEPIZZA') {
+          document.cookie = "cpizza=true;path=/";
+          window.location.href = 'chickenchat.html';
+        } else {
+          alert("Invalid passcode.");
+        }
+      }
+    }
+
+    function clearChat() {
+      messagesRef.remove().then(function() {
+        messagesRef.push().set({
+          message: "Chat cleared",
+          uuid: "3ba4223a-e921-474f-b8ec-1b34d081ba9f", // Admin UUID
+          timestamp: Date.now()
+        }).then(function() {
+          clearChatRef.set(true); // Set the flag to true to notify all users
+        });
+      });
+    }
+
+    function setRole(role) {
+      var userUUID = getUserUUID();
+      if (userUUID) {
+        usersRef.child(userUUID).update({ role: role }, function(error) {
+          if (error) {
+            alert("Error updating role.");
+          } else {
+            alert("Role updated to: " + role);
+          }
+        });
+      } else {
+        alert("User not found.");
+      }
+    }
+
+    function lockChat() {
+      lockChatRef.set(true);
+    }
+
+    function unlockChat() {
+      lockChatRef.set(false);
+    }
+
+    function redirectChat() {
+      redirectChatRef.set(true);
+    }
+
+    function showBeastmode() {
+      var popup = document.getElementById('beastmodePopup');
+      popup.style.display = 'block';
+    }
+
+    function closeBeastMode() {
+      var popup = document.getElementById('beastmodePopup');
+      popup.style.display = 'none';
+    }
+
+    // Initialize chat
+    checkUUID();
+
+    // Add event listener for Enter key to send messages
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Expose functions to global scope
+    window.accessSecretChat = accessSecretChat;
+    window.clearChat = clearChat;
+    window.showBeastmode = showBeastmode;
+    window.closeBeastMode = closeBeastMode;
+  </script>
 </body>
 </html>
