@@ -57,8 +57,8 @@ body {
 }
 
 #messageInputContainer {
-  max-width: 85%;
-  max-height: 2vh;
+  max-width: 90%;
+  max-height: 3vh;
   display: flex;
   padding: 10px;
   background-color: #2e2e2e;
