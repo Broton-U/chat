@@ -117,13 +117,8 @@
 
       // Listen for lockChatFlag changes
       lockChatRef.on('value', function(snapshot) {
-        if (snapshot.val() === true) {
-          document.getElementById('messageInput').disabled = true;
-          document.getElementById('messageInput').placeholder = 'CHAT IS LOCKED';
-        } else {
-          document.getElementById('messageInput').disabled = false;
-          document.getElementById('messageInput').placeholder = 'Type a message...';
-        }
+        var isLocked = snapshot.val() === true;
+        handleChatLock(isLocked);
       });
 
       // Listen for redirectChatFlag changes
@@ -131,6 +126,23 @@
         if (snapshot.val() === true) {
           redirectChatRef.set(false); // Reset the flag
           window.location.href = 'rr.mp4';
+        }
+      });
+    }
+
+    function handleChatLock(isLocked) {
+      var userUUID = getUserUUID();
+      usersRef.child(userUUID).once('value', function(userSnapshot) {
+        var userData = userSnapshot.val();
+        var userRole = userData ? userData.role : 'default';
+        var messageInput = document.getElementById('messageInput');
+
+        if (isLocked && userRole !== 'admin') {
+          messageInput.disabled = true;
+          messageInput.placeholder = 'CHAT IS LOCKED';
+        } else {
+          messageInput.disabled = false;
+          messageInput.placeholder = 'Type a message...';
         }
       });
     }
