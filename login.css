@@ -2,7 +2,7 @@ body {
   background-image: url('blue_skies.jpg');
   background-size: cover;
   background-position: center;
-  filter: blur(8px); dd
+  filter: blur(8px); 
   color: #fff;
   display: flex;
   justify-content: center;
