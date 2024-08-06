@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chicken Chat</title>
+  <!-- Import Firebase libraries from CDN -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+    }
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      padding: 20px;
+      background-color: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      overflow: auto;
+      margin: 20px;
+      position: relative;
+    }
+    .message {
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      text-align: left; /* Ensures text alignment is left */
+    }
+    .message.default {
+      background-color: #e0e0e0;
+    }
+    .message.ChickenMan {
+      background-color: #f8d7da;
+    }
+    .message.Idiots {
+      background-color: #e2a8e2;
+    }
+    .input-container {
+      display: flex;
+      padding: 10px;
+      background-color: #fff;
+      border-top: 1px solid #ddd;
+      position: absolute;
+      bottom: 0;
+      width: calc(100% - 40px);
+      left: 20px;
+    }
+    .input-container input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      margin-right: 10px;
+    }
+    .input-container button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .input-container .back-button {
+      background-color: #f8d7da;
+      color: #721c24;
+      margin-left: 10px; /* Ensure spacing between input field and button */
+    }
+    .input-container .back-button:hover {
+      background-color: #f5c6cb;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Firebase configuration
+      var firebaseConfig = {
+        apiKey: "AIzaSyDB2sNW2w-kvwOaqYJ-6Pojd79j1rRzgDw",
+        authDomain: "chat-71251.firebaseapp.com",
+        databaseURL: "https://chat-71251-default-rtdb.firebaseio.com",
+        projectId: "chat-71251",
+        storageBucket: "chat-71251.appspot.com",
+        messagingSenderId: "290327153997"
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      var database = firebase.database();
+      var messagesRef = database.ref('chickenmessages'); // Using chickenmessages directory
+      var usersRef = database.ref('users');
+
+      function getUserUUID() {
+        var uuid = "";
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+          var cookie = cookies[i].trim();
+          if (cookie.startsWith("userUUID=")) {
+            uuid = cookie.substring("userUUID=".length);
+            break;
+          }
+        }
+        return uuid;
+      }
+
+      function checkAccess() {
+        if (!document.cookie.split(';').some((item) => item.trim().startsWith('cpizza='))) {
+          window.location.href = 'chat.html';
+        }
+      }
+
+      function sendMessage() {
+        var messageInput = document.getElementById('messageInput');
+        var message = messageInput.value;
+        var userUUID = getUserUUID();
+        if (message && userUUID) {
+          messagesRef.push().set({
+            message: message,
+            uuid: userUUID,
+            timestamp: Date.now()
+          });
+          messageInput.value = '';
+        }
+      }
+
+      function displayMessages() {
+        var messagesDiv = document.getElementById('messages');
+        messagesDiv.innerHTML = '';
+        messagesRef.orderByChild('timestamp').on('child_added', function(snapshot) {
+          var messageData = snapshot.val();
+          usersRef.child(messageData.uuid).once('value', function(userSnapshot) {
+            var userData = userSnapshot.val();
+            var userName = userData ? userData.name : 'Unknown';
+            var userRole = userData ? userData.role : 'default';
+            var messageElement = document.createElement('div');
+            messageElement.textContent = userName + ": " + messageData.message;
+            messageElement.className = 'message ' + userRole;
+            messagesDiv.appendChild(messageElement);
+          });
+        });
+      }
+
+      function goBack() {
+        window.location.href = 'chat.html';
+      }
+
+      // Check access to the secret chat
+      checkAccess();
+
+      // Display messages if user has access
+      displayMessages();
+
+      // Add event listener for Enter key to send messages
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+          event.preventDefault(); // Prevent default Enter key behavior (e.g., form submission)
+          sendMessage();
+        }
+      });
+
+      // Expose goBack function to global scope
+      window.goBack = goBack;
+    });
+  </script>
+
+  <div class="chat-container" id="chatContainer">
+    <div id="messages"></div>
+    <div class="input-container">
+      <input type="text" id="messageInput" placeholder="Type a message" />
+      <button class="back-button" onclick="goBack()">Back</button>
+    </div>
+  </div>
+</body>
+</html>
