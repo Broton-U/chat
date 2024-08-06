@@ -5,179 +5,96 @@
   <link rel="stylesheet" type="text/css" href="chat.css">
 </head>
 <body>
-  <div id="chatContainer" style="display: none;">
-    <div id="messages"></div>
-    <div id="messageInputContainer">
-      <input type="text" id="messageInput" placeholder="Type a message...">
-      <button onclick="accessSecretChat()">Secret</button>
-    </div>
-  </div>
-  <div id="beastmodePopup" class="popup">
-    <div class="popup-content">
-      <div class="roles">
-        <button class="role-button admin-role" onclick="setRole('admin')">Admin</button>
-        <button class="role-button autistic-role" onclick="setRole('autistic')">Autistic</button>
-        <button class="role-button idiots-role" onclick="setRole('idiots')">Idiots</button>
-        <button class="role-button default-role" onclick="setRole('default')">Default</button>
-      </div>
-      <div class="actions">
-        <button class="action-button clear-chat" onclick="clearChat()">Clear Chat</button>
-        <button class="action-button lock-chat" onclick="lockChat()">Lock Chat</button>
-        <button class="action-button unlock-chat" onclick="unlockChat()">Unlock Chat</button>
-        <button class="action-button redirect-chat" onclick="redirectChat()">Redirect Chat</button>
-      </div>
-      <div class="done">
-        <button class="done-button" onclick="closeBeastMode()">Done</button>
-      </div>
+  <div id="chatContainer">
+    <div id="messageContainer"></div>
+    <div id="messageInput">
+      <input type="text" id="messageText" placeholder="Type a message">
+      <button onclick="sendMessage()">Send</button>
     </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <script>
-// Initialize Firebase
-firebase.initializeApp({
-  apiKey: "AIzaSyDB2sNW2w-kvwOaqYJ-6Pojd79j1rRzgDw",
-  authDomain: "chat-71251.firebaseapp.com",
-  databaseURL: "https://chat-71251-default-rtdb.firebaseio.com",
-  projectId: "chat-71251",
-  storageBucket: "chat-71251.appspot.com",
-  messagingSenderId: "290327153997"
-});
+    // Firebase configuration
+    firebase.initializeApp({
+      apiKey: "AIzaSyDB2sNW2w-kvwOaqYJ-6Pojd79j1rRzgDw",
+      authDomain: "chat-71251.firebaseapp.com",
+      databaseURL: "https://chat-71251-default-rtdb.firebaseio.com",
+      projectId: "chat-71251",
+      storageBucket: "chat-71251.appspot.com",
+      messagingSenderId: "290327153997"
+    });
 
-var database = firebase.database();
-var messagesRef = database.ref('messages');
-var usersRef = database.ref('users');
-var clearChatRef = database.ref('clearChatFlag');
-var lockChatRef = database.ref('lockChatFlag');
-var redirectChatRef = database.ref('redirectChatFlag');
+    var database = firebase.database();
+    var messagesRef = database.ref('messages');
+    var userUUID = getUserUUID();
+    var messageContainer = document.getElementById('messageContainer');
+    var messageText = document.getElementById('messageText');
 
-function getUserUUID() {
-  var uuid = "";
-  var cookies = document.cookie.split(';');
-  for (var i = 0; i < cookies.length; i++) {
-    var cookie = cookies[i].trim();
-    if (cookie.startsWith("userUUID=")) {
-      uuid = cookie.substring("userUUID=".length);
-      break;
+    function getUserUUID() {
+      var uuid = "";
+      var cookies = document.cookie.split(';');
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i].trim();
+        if (cookie.startsWith("userUUID=")) {
+          uuid = cookie.substring("userUUID=".length);
+          break;
+        }
+      }
+      return uuid;
     }
-  }
-  return uuid;
-}
 
-function checkUUID() {
-  var uuid = getUserUUID();
-  if (!uuid) {
-    window.location.href = 'index.html';
-  } else {
-    document.getElementById('chatContainer').style.display = 'flex';
-    displayMessages();
-  }
-}
+    function loadMessages() {
+      messagesRef.orderByChild('timestamp').once('value', function(snapshot) {
+        var messages = [];
+        snapshot.forEach(function(childSnapshot) {
+          var messageData = childSnapshot.val();
+          messages.push({ id: childSnapshot.key, ...messageData });
+        });
 
-function sendMessage() {
-  var messageInput = document.getElementById('messageInput');
-  var message = messageInput.value.trim();
-  var userUUID = getUserUUID();
-  if (message !== '' && userUUID) {
-    var newMessageRef = messagesRef.push();
-    newMessageRef.set({
-      message: message,
-      uuid: userUUID,
-      timestamp: Date.now()
-    });
-    messageInput.value = '';
-  }
-}
+        messages.sort((a, b) => a.timestamp - b.timestamp); // Sort messages by timestamp (oldest first)
 
-function displayMessages() {
-  var messagesDiv = document.getElementById('messages');
-  messagesDiv.innerHTML = ''; // Clear previous messages
+        // Render messages
+        messageContainer.innerHTML = ''; // Clear existing messages
+        messages.forEach(message => {
+          var messageElement = document.createElement('div');
+          messageElement.classList.add('message');
+          if (message.senderUUID === userUUID) {
+            messageElement.classList.add('my-message');
+          } else {
+            messageElement.classList.add('other-message');
+          }
+          messageElement.textContent = message.text;
+          messageContainer.appendChild(messageElement);
+        });
 
-  // Fetch messages ordered by timestamp in ascending order
-  messagesRef.orderByChild('timestamp').limitToLast(20).on('value', function(snapshot) {
-    var messages = [];
-    snapshot.forEach(function(childSnapshot) {
-      var messageData = childSnapshot.val();
-      messages.push({ key: childSnapshot.key, ...messageData });
-    });
-
-    // Clear existing messages to avoid duplication
-    messagesDiv.innerHTML = '';
-
-    // Display messages in reverse order (oldest at the top)
-    messages.reverse().forEach(function(messageData) {
-      usersRef.child(messageData.uuid).once('value', function(userSnapshot) {
-        var userData = userSnapshot.val();
-        var userName = userData ? userData.name : 'Unknown';
-        var userRole = userData ? userData.role : 'default';
-        var messageElement = document.createElement('div');
-        messageElement.textContent = userName + ": " + messageData.message;
-        messageElement.className = 'message ' + userRole + (messageData.uuid === getUserUUID() ? ' self' : '');
-        messagesDiv.appendChild(messageElement);
+        // Scroll to the bottom
+        messageContainer.scrollTop = messageContainer.scrollHeight;
       });
-    });
-
-    // Scroll to bottom after messages have been updated
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  });
-
-  // Listen for clearChatFlag changes
-  clearChatRef.on('value', function(snapshot) {
-    if (snapshot.val() === true) {
-      clearChatRef.set(false); // Reset the flag
-      location.reload(); // Refresh the page for all users
     }
-  });
 
-  // Listen for lockChatFlag changes
-  lockChatRef.on('value', function(snapshot) {
-    var isLocked = snapshot.val() === true;
-    handleChatLock(isLocked);
-  });
-
-  // Listen for redirectChatFlag changes
-  redirectChatRef.on('value', function(snapshot) {
-    if (snapshot.val() === true) {
-      redirectChatRef.set(false); // Reset the flag
-      window.location.href = 'rr.mp4';
+    function sendMessage() {
+      var text = messageText.value.trim();
+      if (text) {
+        var newMessageRef = messagesRef.push();
+        newMessageRef.set({
+          text: text,
+          senderUUID: userUUID,
+          timestamp: Date.now()
+        }, function(error) {
+          if (error) {
+            alert("Error sending message.");
+          } else {
+            messageText.value = ''; // Clear input field
+            loadMessages(); // Reload messages after sending
+          }
+        });
+      }
     }
-  });
-}
 
-function handleChatLock(isLocked) {
-  var messageInput = document.getElementById('messageInput');
-  if (isLocked) {
-    messageInput.disabled = true;
-    messageInput.placeholder = 'CHAT IS LOCKED';
-  } else {
-    messageInput.disabled = false;
-    messageInput.placeholder = 'Type a message...';
-  }
-}
-
-// Initialize chat
-checkUUID();
-
-// Add event listener for Enter key to send messages
-document.addEventListener('keydown', function(event) {
-  if (event.key === 'Enter') {
-    event.preventDefault();
-    sendMessage();
-  }
-});
-
-// Define accessSecretChat if used in HTML
-function accessSecretChat() {
-  // Your code for accessing secret chat
-}
-
-// Expose functions to global scope
-window.accessSecretChat = accessSecretChat;
-window.clearChat = clearChat;
-window.showBeastmode = showBeastmode;
-window.closeBeastMode = closeBeastMode;
-
- </script>
+    // Load messages on page load
+    loadMessages();
+  </script>
 </body>
 </html>
