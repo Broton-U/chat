@@ -74,68 +74,69 @@
       }
     }
 
-    function sendMessage() {
-      var messageInput = document.getElementById('messageInput');
-      var message = messageInput.value.trim();
-      var userUUID = getUserUUID();
-      if (message !== '' && userUUID) {
-        var timestamp = new Date().toISOString(); // Save timestamp as ISO 8601 string
-        messagesRef.child(timestamp).set({
-          message: message,
-          uuid: userUUID,
-          timestamp: timestamp
-        });
-        messageInput.value = '';
-      }
+function sendMessage() {
+  var messageInput = document.getElementById('messageInput');
+  var message = messageInput.value.trim();
+  var userUUID = getUserUUID();
+  if (message !== '' && userUUID) {
+    var messageRef = messagesRef.push(); // Create a new unique key
+    messageRef.set({
+      message: message,
+      uuid: userUUID,
+      timestamp: Date.now() // Save timestamp as a number
+    });
+    messageInput.value = '';
+  }
+}
+
+function displayMessages() {
+  var messagesDiv = document.getElementById('messages');
+  messagesDiv.innerHTML = ''; // Clear previous messages
+
+  // Fetch messages sorted by timestamp (numerical value) in ascending order
+  messagesRef.orderByChild('timestamp').on('value', function(snapshot) {
+    messagesDiv.innerHTML = ''; // Clear previous messages
+
+    snapshot.forEach(function(childSnapshot) {
+      var messageData = childSnapshot.val();
+      usersRef.child(messageData.uuid).once('value', function(userSnapshot) {
+        var userData = userSnapshot.val();
+        var userName = userData ? userData.name : 'Unknown';
+        var userRole = userData ? userData.role : 'default';
+        var messageElement = document.createElement('div');
+        messageElement.textContent = userName + ": " + messageData.message;
+        messageElement.className = 'message ' + userRole + (messageData.uuid === getUserUUID() ? ' self' : '');
+        messagesDiv.appendChild(messageElement);
+      });
+    });
+
+    // Scroll to bottom after messages have been updated
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  });
+
+  // Listen for clearChatFlag changes
+  clearChatRef.on('value', function(snapshot) {
+    if (snapshot.val() === true) {
+      clearChatRef.set(false); // Reset the flag
+      location.reload(); // Refresh the page for all users
     }
+  });
 
-    function displayMessages() {
-      var messagesDiv = document.getElementById('messages');
-      messagesDiv.innerHTML = ''; // Clear previous messages
+  // Listen for lockChatFlag changes
+  lockChatRef.on('value', function(snapshot) {
+    var isLocked = snapshot.val() === true;
+    handleChatLock(isLocked);
+  });
 
-      // Fetch messages sorted by timestamp (keys) in ascending order
-      messagesRef.orderByKey().on('value', function(snapshot) {
-        messagesDiv.innerHTML = ''; // Clear previous messages
-
-        snapshot.forEach(function(childSnapshot) {
-          var messageData = childSnapshot.val();
-          usersRef.child(messageData.uuid).once('value', function(userSnapshot) {
-            var userData = userSnapshot.val();
-            var userName = userData ? userData.name : 'Unknown';
-            var userRole = userData ? userData.role : 'default';
-            var messageElement = document.createElement('div');
-            messageElement.textContent = userName + ": " + messageData.message;
-            messageElement.className = 'message ' + userRole + (messageData.uuid === getUserUUID() ? ' self' : '');
-            messagesDiv.appendChild(messageElement);
-          });
-        });
-
-        // Scroll to bottom after messages have been updated
-        messagesDiv.scrollTop = messagesDiv.scrollHeight; 
-      });
-
-      // Listen for clearChatFlag changes
-      clearChatRef.on('value', function(snapshot) {
-        if (snapshot.val() === true) {
-          clearChatRef.set(false); // Reset the flag
-          location.reload(); // Refresh the page for all users
-        }
-      });
-
-      // Listen for lockChatFlag changes
-      lockChatRef.on('value', function(snapshot) {
-        var isLocked = snapshot.val() === true;
-        handleChatLock(isLocked);
-      });
-
-      // Listen for redirectChatFlag changes
-      redirectChatRef.on('value', function(snapshot) {
-        if (snapshot.val() === true) {
-          redirectChatRef.set(false); // Reset the flag
-          window.location.href = 'rr.mp4';
-        }
-      });
+  // Listen for redirectChatFlag changes
+  redirectChatRef.on('value', function(snapshot) {
+    if (snapshot.val() === true) {
+      redirectChatRef.set(false); // Reset the flag
+      window.location.href = 'rr.mp4';
     }
+  });
+}
+
 
     function handleChatLock(isLocked) {
       var userUUID = getUserUUID();
