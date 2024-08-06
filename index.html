@@ -1,34 +1,124 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Who Dis</title>
+  <title>Who dis</title>
   <link rel="stylesheet" type="text/css" href="login.css">
 </head>
 <body>
-  <div id="loginSignupContainer">
-    <div id="loginForm" class="form-container">
-      <h2>Login</h2>
-      <label for="loginName">Name:</label>
-      <input type="text" id="loginName" name="loginName" placeholder="Enter your name">
-      <label for="password">Password:</label>
-      <input type="password" id="password" name="password" placeholder="Enter your password">
-      <button onclick="login()">Login</button>
-      <button onclick="showSignup()">Sign Up</button>
-    </div>
-
-    <div id="signupForm" class="form-container" style="display: none;">
-      <h2>Sign Up</h2>
-      <label for="signupName">Name:</label>
-      <input type="text" id="signupName" name="signupName" placeholder="Enter your name">
-      <label for="signupPassword">Password:</label>
-      <input type="password" id="signupPassword" name="signupPassword" placeholder="Enter your password">
-      <button onclick="signup()">Sign Up</button>
-      <button onclick="showLogin()">Login</button>
-    </div>
+  <div id="loginContainer">
+    <h1>Welcome to the Chat</h1>
+    <p>Please log in or sign up.</p>
+    <button onclick="promptForLoginOrSignup()">Log In / Sign Up</button>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <script src="login.js"></script>
+  <script>
+    function getUserUUID() {
+      var uuid = "";
+      var cookies = document.cookie.split(';');
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i].trim();
+        if (cookie.startsWith("userUUID=")) {
+          uuid = cookie.substring("userUUID=".length);
+          break;
+        }
+      }
+      return uuid;
+    }
+
+    function redirectIfLoggedIn() {
+      var uuid = getUserUUID();
+      if (uuid) {
+        window.location.href = 'chat.html';
+      }
+    }
+
+    function promptForLoginOrSignup() {
+      var action = prompt("Login or Signup? (Type 'login' or 'signup')");
+      if (action === 'signup') {
+        promptForUserName(true);
+      } else if (action === 'login') {
+        promptForUserName(false);
+      } else {
+        alert("Invalid choice.");
+      }
+    }
+
+    function promptForUserName(isSignup) {
+      var userName = prompt("Enter your name:");
+      if (userName) {
+        userName = userName.trim();
+        var lowerCaseName = userName.toLowerCase();
+        checkUserName(lowerCaseName, isSignup, function(exists) {
+          if (exists && isSignup) {
+            alert("Name taken, please choose another.");
+            promptForUserName(true);
+          } else if (exists && !isSignup) {
+            promptForPassword(function(password) {
+              authenticateUser(lowerCaseName, password, function(success) {
+                if (success) {
+                  window.location.href = 'chat.html';
+                } else {
+                  alert("Wrong password, try again.");
+                  promptForUserName(false);
+                }
+              });
+            });
+          } else {
+            var password = prompt("Enter a password:");
+            var userUUID = generateUUID();
+            document.cookie = "userUUID=" + userUUID + ";path=/";
+            usersRef.child(userUUID).set({ name: userName, nameLower: lowerCaseName, role: "default", password: password }, function(error) {
+              if (error) {
+                alert("Error creating user.");
+              } else {
+                window.location.href = 'chat.html';
+              }
+            });
+          }
+        });
+      }
+    }
+
+    function checkUserName(userName, isSignup, callback) {
+      var query = usersRef.orderByChild('nameLower').equalTo(userName);
+      query.once('value', function(snapshot) {
+        callback(snapshot.exists());
+      });
+    }
+
+    function promptForPassword(callback) {
+      var password = prompt("Enter your password:");
+      callback(password);
+    }
+
+    function authenticateUser(userName, password, callback) {
+      var query = usersRef.orderByChild('nameLower').equalTo(userName);
+      query.once('value', function(snapshot) {
+        if (snapshot.exists()) {
+          snapshot.forEach(function(childSnapshot) {
+            var userData = childSnapshot.val();
+            if (userData.password === password) {
+              document.cookie = "userUUID=" + childSnapshot.key + ";path=/";
+              callback(true);
+            } else {
+              callback(false);
+            }
+          });
+        } else {
+          callback(false);
+        }
+      });
+    }
+
+    function generateUUID() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+
+    // Redirect if logged in
+    redirectIfLoggedIn();
+  </script>
 </body>
 </html>
