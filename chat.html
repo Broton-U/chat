@@ -13,20 +13,22 @@
     </div>
   </div>
   <div id="beastmodePopup" class="popup">
-    <div class="roles">
-      <button onclick="setRole('admin')">Admin</button>
-      <button onclick="setRole('autistic')">Autistic</button>
-      <button onclick="setRole('idiots')">Idiots</button>
-      <button onclick="setRole('default')">Default</button>
-    </div>
-    <div class="actions">
-      <button onclick="clearChat()">Clear Chat</button>
-      <button onclick="lockChat()">Lock Chat</button>
-      <button onclick="unlockChat()">Unlock Chat</button>
-      <button onclick="redirectChat()">Redirect Chat</button>
-    </div>
-    <div class="done">
-      <button onclick="closeBeastMode()">Done</button>
+    <div class="popup-content">
+      <div class="roles">
+        <button class="role-button admin-role" onclick="setRole('admin')">Admin</button>
+        <button class="role-button autistic-role" onclick="setRole('autistic')">Autistic</button>
+        <button class="role-button idiots-role" onclick="setRole('idiots')">Idiots</button>
+        <button class="role-button default-role" onclick="setRole('default')">Default</button>
+      </div>
+      <div class="actions">
+        <button class="action-button clear-chat" onclick="clearChat()">Clear Chat</button>
+        <button class="action-button lock-chat" onclick="lockChat()">Lock Chat</button>
+        <button class="action-button unlock-chat" onclick="unlockChat()">Unlock Chat</button>
+        <button class="action-button redirect-chat" onclick="redirectChat()">Redirect Chat</button>
+      </div>
+      <div class="done">
+        <button class="done-button" onclick="closeBeastMode()">Done</button>
+      </div>
     </div>
   </div>
 
@@ -65,7 +67,7 @@
     function checkUUID() {
       var uuid = getUserUUID();
       if (!uuid) {
-        window.location.href = 'login.html';
+        window.location.href = 'index.html';
       } else {
         document.getElementById('chatContainer').style.display = 'flex';
         displayMessages();
@@ -89,7 +91,7 @@
     function displayMessages() {
       var messagesDiv = document.getElementById('messages');
       messagesDiv.innerHTML = ''; // Clear previous messages
-      messagesRef.on('child_added', function(snapshot) {
+      messagesRef.orderByChild('timestamp').on('child_added', function(snapshot) {
         var messageData = snapshot.val();
         usersRef.child(messageData.uuid).once('value', function(userSnapshot) {
           var userData = userSnapshot.val();
