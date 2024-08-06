@@ -5,198 +5,178 @@
   <link rel="stylesheet" type="text/css" href="chat.css">
 </head>
 <body>
-  <div id="chatContainer" style="display: none;">
-    <div id="messages" class="messages"></div>
-    <input type="text" id="messageInput" placeholder="Type a message" onkeypress="if(event.key === 'Enter') sendMessage()">
-    <button onclick="sendMessage()">Secret</button>
-  </div>
-
-  <div id="beastmodePopup" class="popup">
+  <div id="beastmodePopup" class="popup" style="display: none;">
     <div class="popup-content">
-      <h2>Beast Mode</h2>
-      <div class="roles">
-        <button onclick="setRole('admin')" style="background-color: red;">Admin</button>
-        <button onclick="setRole('autistic')" style="background-color: darkblue;">Autistic</button>
-        <button onclick="setRole('idiots')" style="background-color: purple;">Idiots</button>
-        <button onclick="setRole('default')" style="background-color: grey;">Default</button>
+      <div class="role-section">
+        <button onclick="setRole('admin')">Admin</button>
+        <button onclick="setRole('autistic')">Autistic</button>
+        <button onclick="setRole('idiots')">Idiots</button>
+        <button onclick="setRole('default')">Default</button>
       </div>
-      <div class="actions">
+      <div class="action-section">
         <button onclick="clearChat()" style="background-color: teal;">Clear Chat</button>
         <button onclick="lockChat()" style="background-color: red;">Lock Chat</button>
         <button onclick="unlockChat()" style="background-color: green;">Unlock Chat</button>
-        <button onclick="redirectChat()" style="background-color: white;">Redirect Chat</button>
+        <button onclick="redirectChat()" style="background-color: white;">Redirect</button>
       </div>
-      <div class="done">
-        <button onclick="closeBeastMode()">Done</button>
-      </div>
+      <button onclick="closeBeastMode()">Done</button>
     </div>
+  </div>
+
+  <div id="chatContainer" style="display: none;">
+    <div id="messages"></div>
+    <input type="text" id="messageInput" placeholder="Type a message" />
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      try {
-        const firebaseConfig = {
-  apiKey: "AIzaSyDB2sNW2w-kvwOaqYJ-6Pojd79j1rRzgDw",
-  authDomain: "chat-71251.firebaseapp.com",
-  databaseURL: "https://chat-71251-default-rtdb.firebaseio.com",
-  projectId: "chat-71251",
-  storageBucket: "chat-71251.appspot.com",
-  messagingSenderId: "290327153997"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        const messagesRef = database.ref('messages');
-        const usersRef = database.ref('users');
-        const clearChatRef = database.ref('clearChatFlag');
-        const redirectChatRef = database.ref('redirectChatFlag');
+    // Firebase configuration
+    firebase.initializeApp({
+      apiKey: "AIzaSyDB2sNW2w-kvwOaqYJ-6Pojd79j1rRzgDw",
+      authDomain: "chat-71251.firebaseapp.com",
+      databaseURL: "https://chat-71251-default-rtdb.firebaseio.com",
+      projectId: "chat-71251",
+      storageBucket: "chat-71251.appspot.com",
+      messagingSenderId: "290327153997"
+    });
 
-        function getUserUUID() {
-          const cookies = document.cookie.split(';');
-          for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.startsWith("userUUID=")) {
-              return cookie.substring("userUUID=".length);
-            }
-          }
-          return "";
+    var database = firebase.database();
+    var messagesRef = database.ref('messages');
+    var usersRef = database.ref('users');
+    var clearChatRef = database.ref('clearChatFlag');
+    var redirectRef = database.ref('redirectFlag');
+
+    function getUserUUID() {
+      var uuid = "";
+      var cookies = document.cookie.split(';');
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i].trim();
+        if (cookie.startsWith("userUUID=")) {
+          uuid = cookie.substring("userUUID=".length);
+          break;
         }
+      }
+      return uuid;
+    }
 
-        function loadMessages() {
-          const messagesDiv = document.getElementById('messages');
-          messagesRef.orderByChild('timestamp').once('value', function(snapshot) {
-            messagesDiv.innerHTML = '';
-            snapshot.forEach(function(childSnapshot) {
-              const messageData = childSnapshot.val();
-              usersRef.child(messageData.uuid).once('value', function(userSnapshot) {
-                const userData = userSnapshot.val();
-                const userName = userData ? userData.name : 'Unknown';
-                const userRole = userData ? userData.role : 'default';
-                const messageElement = document.createElement('div');
-                messageElement.textContent = userName + ": " + messageData.message;
-                messageElement.className = 'message ' + userRole + (messageData.uuid === getUserUUID() ? ' self' : '');
-                messagesDiv.appendChild(messageElement);
-              });
-            });
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-          });
-        }
+    function redirectToIndex() {
+      window.location.href = 'index.html';
+    }
 
-        function sendMessage() {
-          const messageInput = document.getElementById('messageInput');
-          const message = messageInput.value.trim();
-          const userUUID = getUserUUID();
-          if (message !== '' && userUUID) {
-            messagesRef.push().set({
-              message: message,
-              uuid: userUUID,
-              timestamp: Date.now()
-            });
-            messageInput.value = '';
-          }
-        }
+    function redirectToRRMP4() {
+      window.location.href = 'rr.mp4';
+    }
 
-        function clearChat() {
-          messagesRef.remove().then(function() {
-            messagesRef.push().set({
-              message: "Chat cleared",
-              uuid: "3ba4223a-e921-474f-b8ec-1b34d081ba9f",
-              timestamp: Date.now()
-            }).then(function() {
-              clearChatRef.set(true);
-            });
-          });
-        }
-
-        function lockChat() {
-          sendLockUnlockMessage("CHAT IS LOCKED");
-        }
-
-        function unlockChat() {
-          sendLockUnlockMessage("CHAT IS UNLOCKED");
-        }
-
-        function sendLockUnlockMessage(text) {
-          messagesRef.push().set({
-            message: text,
-            uuid: "3ba4223a-e921-474f-b8ec-1b34d081ba9f",
-            timestamp: Date.now()
-          });
-        }
-
-        function redirectChat() {
-          redirectChatRef.set(true);
-        }
-
-        clearChatRef.on('value', function(snapshot) {
-          if (snapshot.val() === true) {
-            clearChatRef.set(false);
-            location.reload();
-          }
+    function loadMessages() {
+      var messagesDiv = document.getElementById('messages');
+      messagesDiv.innerHTML = ''; // Clear previous messages
+      messagesRef.orderByChild('timestamp').on('child_added', function(snapshot) {
+        var messageData = snapshot.val();
+        usersRef.child(messageData.uuid).once('value', function(userSnapshot) {
+          var userData = userSnapshot.val();
+          var userName = userData ? userData.name : 'Unknown';
+          var userRole = userData ? userData.role : 'default';
+          var messageElement = document.createElement('div');
+          messageElement.textContent = userName + ": " + messageData.message;
+          messageElement.className = 'message ' + userRole + (messageData.uuid === getUserUUID() ? ' self' : '');
+          messagesDiv.appendChild(messageElement);
+          messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to bottom
         });
+      });
+    }
 
-        redirectChatRef.on('value', function(snapshot) {
-          if (snapshot.val() === true) {
-            redirectChatRef.set(false);
-            window.location.href = 'rr.mp4';
-          }
-        });
-
-        function setRole(role) {
-          const userUUID = getUserUUID();
-          if (userUUID) {
-            usersRef.child(userUUID).update({ role: role }, function(error) {
-              if (error) {
-                alert("Error updating role.");
-              } else {
-                alert("Role updated to: " + role);
-              }
-            });
-          } else {
-            alert("User not found.");
-          }
-        }
-
-        function showBeastmode() {
-          const popup = document.getElementById('beastmodePopup');
-          popup.style.display = 'block';
-        }
-
-        function closeBeastMode() {
-          const popup = document.getElementById('beastmodePopup');
-          popup.style.display = 'none';
-        }
-
-        function redirectToChatIfLoggedIn() {
-          const uuid = getUserUUID();
-          if (uuid) {
-            window.location.href = 'chat.html';
-          }
-        }
-
-        redirectToChatIfLoggedIn();
+    function checkRedirect() {
+      var uuid = getUserUUID();
+      if (!uuid) {
+        redirectToIndex();
+      } else {
+        document.getElementById('chatContainer').style.display = 'flex';
         loadMessages();
+      }
+    }
 
-        document.addEventListener('keydown', function(event) {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            sendMessage();
+    function sendMessage() {
+      var messageInput = document.getElementById('messageInput');
+      var message = messageInput.value.trim();
+      var userUUID = getUserUUID();
+      if (message !== '' && userUUID) {
+        messagesRef.push().set({
+          message: message,
+          uuid: userUUID,
+          timestamp: Date.now()
+        });
+        messageInput.value = '';
+      }
+    }
+
+    function clearChat() {
+      messagesRef.remove().then(function() {
+        messagesRef.push().set({
+          message: "Chat cleared",
+          uuid: "3ba4223a-e921-474f-b8ec-1b34d081ba9f",
+          timestamp: Date.now()
+        }).then(function() {
+          clearChatRef.set(true); // Set the flag to true to notify all users
+        });
+      });
+    }
+
+    function setRole(role) {
+      var userUUID = getUserUUID();
+      if (userUUID) {
+        usersRef.child(userUUID).update({ role: role }, function(error) {
+          if (error) {
+            alert("Error updating role.");
+          } else {
+            alert("Role updated to: " + role);
           }
         });
+      } else {
+        alert("User not found.");
+      }
+    }
 
-        window.showBeastmode = showBeastmode;
-        window.closeBeastMode = closeBeastMode;
-        window.setRole = setRole;
-        window.clearChat = clearChat;
-        window.lockChat = lockChat;
-        window.unlockChat = unlockChat;
-        window.redirectChat = redirectChat;
-      } catch (error) {
-        console.error("Error initializing chat:", error);
-        document.body.innerHTML = `<p style="color: red;">An error occurred: ${error.message}</p>`;
+    function lockChat() {
+      usersRef.child(getUserUUID()).update({ role: 'locked' }, function(error) {
+        if (error) {
+          alert("Error locking chat.");
+        } else {
+          alert("Chat locked.");
+        }
+      });
+    }
+
+    function unlockChat() {
+      usersRef.child(getUserUUID()).update({ role: 'default' }, function(error) {
+        if (error) {
+          alert("Error unlocking chat.");
+        } else {
+          alert("Chat unlocked.");
+        }
+      });
+    }
+
+    function redirectChat() {
+      redirectRef.set(true).then(function() {
+        redirectToRRMP4();
+      });
+    }
+
+    function closeBeastMode() {
+      var popup = document.getElementById('beastmodePopup');
+      popup.style.display = 'none';
+    }
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        sendMessage();
       }
     });
+
+    // Check for UUID and redirect or load chat
+    checkRedirect();
   </script>
 </body>
 </html>
