@@ -28,20 +28,24 @@ body::before {
 
 /* Style for the login/signup container */
 #loginSignupContainer {
-  background-color: rgba(68, 68, 68, 0.8); /* Slightly transparent background for better readability */
-  border-radius: 15px; /* Increase border radius for a more rounded look */
-  padding: 30px; /* Increase padding for more space inside the container */
-  width: 400px; /* Increase width */
-  max-width: 90%; /* Ensure it’s responsive */
-  height: 500px; /* Increase height */
-  max-height: 80%; /* Ensure it’s responsive */
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Slightly larger shadow for emphasis */
   position: relative;
-  z-index: 1; /* Ensure it's on top of the blurred background */
   display: flex;
   flex-direction: column;
   align-items: center; /* Center align contents horizontally */
   justify-content: center; /* Center align contents vertically */
+  width: 400px; /* Set width */
+  max-width: 90%; /* Ensure it’s responsive */
+  height: 500px; /* Set height */
+  max-height: 80%; /* Ensure it’s responsive */
+  padding: 30px; /* Increase padding for more space inside the container */
+  border-radius: 15px; /* Increase border radius for a more rounded look */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Slightly larger shadow for emphasis */
+  background-image: url('topo.jpg'); /* Set background image */
+  background-size: cover;
+  background-position: center;
+  background-blend-mode: overlay; /* Blend the image with the background color */
+  background-color: rgba(68, 68, 68, 0.65); /* Slightly transparent background color */
+  z-index: 1; /* Ensure it's on top of the blurred background */
 }
 
 /* Style for the form-container */
