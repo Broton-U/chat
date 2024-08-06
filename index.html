@@ -29,6 +29,7 @@
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="login.js"></script>
   <script>
     // Firebase configuration
     firebase.initializeApp({
@@ -56,26 +57,43 @@
       return uuid;
     }
 
-    function redirectToChat() {
-      window.location.href = 'chat.html';
+    function setCookie(name, value, days) {
+      var expires = "";
+      if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toUTCString();
+      }
+      document.cookie = name + "=" + (value || "") + expires + "; path=/";
     }
 
-    function checkRedirect() {
-      var uuid = getUserUUID();
-      if (uuid) {
-        redirectToChat();
-      }
+    function showLogin() {
+      document.getElementById('loginForm').style.display = 'block';
+      document.getElementById('signupForm').style.display = 'none';
+    }
+
+    function showSignup() {
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('signupForm').style.display = 'block';
     }
 
     function login() {
       var name = document.getElementById('loginName').value.trim().toLowerCase();
       var password = document.getElementById('password').value;
-      authenticateUser(name, password, function(success) {
-        if (success) {
-          document.cookie = "userUUID=" + name + ";path=/"; // Set cookie
-          redirectToChat();
+      
+      usersRef.orderByChild('nameLower').equalTo(name).once('value', function(snapshot) {
+        if (snapshot.exists()) {
+          snapshot.forEach(function(childSnapshot) {
+            var userData = childSnapshot.val();
+            if (userData.password === password) {
+              setCookie('userUUID', childSnapshot.key, 1);
+              window.location.href = 'chat.html';
+            } else {
+              alert("Wrong password, try again.");
+            }
+          });
         } else {
-          alert("Invalid credentials.");
+          alert("User does not exist.");
         }
       });
     }
@@ -85,45 +103,24 @@
       var password = document.getElementById('signupPassword').value;
       var lowerCaseName = name.toLowerCase();
 
-      checkUserName(lowerCaseName, function(exists) {
-        if (exists) {
+      usersRef.orderByChild('nameLower').equalTo(lowerCaseName).once('value', function(snapshot) {
+        if (snapshot.exists()) {
           alert("Name taken, please choose another.");
         } else {
           var userUUID = generateUUID();
-          document.cookie = "userUUID=" + userUUID + ";path=/"; // Set cookie
-          usersRef.child(userUUID).set({ name: name, nameLower: lowerCaseName, password: password, role: 'default' }, function(error) {
+          usersRef.child(userUUID).set({ 
+            name: name, 
+            nameLower: lowerCaseName, 
+            role: "default", 
+            password: password 
+          }, function(error) {
             if (error) {
               alert("Error creating user.");
             } else {
-              redirectToChat();
+              setCookie('userUUID', userUUID, 1);
+              window.location.href = 'chat.html';
             }
           });
-        }
-      });
-    }
-
-    function checkUserName(userName, callback) {
-      var query = usersRef.orderByChild('nameLower').equalTo(userName);
-      query.once('value', function(snapshot) {
-        callback(snapshot.exists());
-      });
-    }
-
-    function authenticateUser(userName, password, callback) {
-      var query = usersRef.orderByChild('nameLower').equalTo(userName);
-      query.once('value', function(snapshot) {
-        if (snapshot.exists()) {
-          snapshot.forEach(function(childSnapshot) {
-            var userData = childSnapshot.val();
-            if (userData.password === password) {
-              document.cookie = "userUUID=" + childSnapshot.key + ";path=/"; // Set cookie
-              callback(true);
-            } else {
-              callback(false);
-            }
-          });
-        } else {
-          callback(false);
         }
       });
     }
@@ -135,8 +132,10 @@
       });
     }
 
-    // Check for existing UUID and redirect if necessary
-    checkRedirect();
+    // Redirect if user is already logged in
+    if (getUserUUID()) {
+      window.location.href = 'chat.html';
+    }
   </script>
 </body>
 </html>
