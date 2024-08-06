@@ -8,6 +8,7 @@ body {
   justify-content: center;
   align-items: center;
   background-color: #000; /* Fallback color */
+  color: white;
 }
 
 body::before {
@@ -20,7 +21,7 @@ body::before {
   background-image: url('blue_skies.jpg');
   background-size: cover;
   background-position: center;
-  filter: blur(8px);
+  filter: blur(6px);
   z-index: -1; /* Place the background behind everything else */
 }
 
@@ -51,6 +52,7 @@ body::before {
 .form-container h2 {
   margin-top: 0;
   margin-bottom: 20px; /* Add more space below the heading */
+  margin-left: 10px;
 }
 
 .form-container label,
