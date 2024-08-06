@@ -40,12 +40,21 @@ body::before {
   padding: 30px; /* Increase padding for more space inside the container */
   border-radius: 15px; /* Increase border radius for a more rounded look */
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Slightly larger shadow for emphasis */
+  overflow: hidden; /* Ensure no overflow from pseudo-element */
+}
+
+#loginSignupContainer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background-image: url('topo.jpg'); /* Set background image */
   background-size: cover;
   background-position: center;
-  background-blend-mode: overlay; /* Blend the image with the background color */
-  background-color: rgba(68, 68, 68, 0.65); /* Slightly transparent background color */
-  z-index: 1; /* Ensure it's on top of the blurred background */
+  opacity: 0.5; /* 50% opacity */
+  z-index: -1; /* Ensure it’s behind the content */
 }
 
 /* Style for the form-container */
@@ -54,6 +63,7 @@ body::before {
   flex-direction: column;
   width: 100%; /* Make the form-container occupy full width of the container */
   align-items: center; /* Center align contents horizontally */
+  position: relative; /* Ensure proper stacking context */
 }
 
 .form-container h1 {
