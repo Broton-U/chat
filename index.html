@@ -20,6 +20,8 @@
       <h1>Sign Up</h1>
       <label for="signupName">Name:</label>
       <input type="text" id="signupName" name="signupName" placeholder="Enter your name">
+      <label for="signupEmail">School Email:</label>
+      <input type="email" id="signupEmail" name="signupEmail" placeholder="Enter your school email">
       <label for="signupPassword">Password:</label>
       <input type="password" id="signupPassword" name="signupPassword" placeholder="Enter your password">
       <button style="background-color: #04AF70; color: white;" onclick="signup()">Sign Up</button>
@@ -99,8 +101,15 @@
 
     function signup() {
       var name = document.getElementById('signupName').value.trim();
+      var email = document.getElementById('signupEmail').value.trim();
       var password = document.getElementById('signupPassword').value;
       var lowerCaseName = name.toLowerCase();
+
+      // Validate email
+      if (!email.endsWith('2029@hvgs.nsw.edu.au')) {
+        alert("Invalid email address.");
+        return;
+      }
 
       usersRef.orderByChild('nameLower').equalTo(lowerCaseName).once('value', function(snapshot) {
         if (snapshot.exists()) {
@@ -111,7 +120,8 @@
             name: name, 
             nameLower: lowerCaseName, 
             role: "default", 
-            password: password 
+            password: password,
+            email: email // Store email in the database
           }, function(error) {
             if (error) {
               alert("Error creating user.");
