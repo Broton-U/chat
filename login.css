@@ -52,7 +52,8 @@ body::before {
 .form-container h2 {
   margin-top: 0;
   margin-bottom: 20px; /* Add more space below the heading */
-  margin-left: 10px;
+  margin-left: 50px;
+  font-weight: bold;
 }
 
 .form-container label,
@@ -71,6 +72,7 @@ body::before {
 
 .form-container button {
   padding: 15px; /* Increase padding for larger buttons */
+  font-weight: bolder;
   border: none;
   border-radius: 5px;
   background-color: #666;
