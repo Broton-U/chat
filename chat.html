@@ -80,10 +80,11 @@ function sendMessage() {
   var message = messageInput.value.trim();
   var userUUID = getUserUUID();
   if (message !== '' && userUUID) {
-    messagesRef.push().set({
+    var newMessageRef = messagesRef.push();
+    newMessageRef.set({
       message: message,
       uuid: userUUID,
-      timestamp: Date.now() // Store timestamp as a number
+      timestamp: Date.now()
     });
     messageInput.value = '';
   }
@@ -93,17 +94,19 @@ function displayMessages() {
   var messagesDiv = document.getElementById('messages');
   messagesDiv.innerHTML = ''; // Clear previous messages
 
-  // Fetch messages ordered by timestamp in descending order
+  // Fetch messages ordered by timestamp in ascending order
   messagesRef.orderByChild('timestamp').limitToLast(20).on('value', function(snapshot) {
     var messages = [];
-
     snapshot.forEach(function(childSnapshot) {
       var messageData = childSnapshot.val();
       messages.push({ key: childSnapshot.key, ...messageData });
     });
 
+    // Clear existing messages to avoid duplication
+    messagesDiv.innerHTML = '';
+
     // Display messages in reverse order (oldest at the top)
-    messages.forEach(function(messageData) {
+    messages.reverse().forEach(function(messageData) {
       usersRef.child(messageData.uuid).once('value', function(userSnapshot) {
         var userData = userSnapshot.val();
         var userName = userData ? userData.name : 'Unknown';
@@ -164,11 +167,17 @@ document.addEventListener('keydown', function(event) {
   }
 });
 
+// Define accessSecretChat if used in HTML
+function accessSecretChat() {
+  // Your code for accessing secret chat
+}
+
 // Expose functions to global scope
 window.accessSecretChat = accessSecretChat;
 window.clearChat = clearChat;
 window.showBeastmode = showBeastmode;
 window.closeBeastMode = closeBeastMode;
+
  </script>
 </body>
 </html>
