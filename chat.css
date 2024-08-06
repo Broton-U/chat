@@ -41,7 +41,7 @@ body {
 
 .self {
   background-color: #007bff;
-  align-self: flex-end; /* Align own messages to the end */
+  align-self: flex-start; /* Align own messages to the left */
 }
 
 .default, .admin, .autistic, .idiots {
@@ -60,11 +60,8 @@ body {
   background-color: #800080;
 }
 
-/* Ensures message containers have a consistent width */
-.message {
-  display: inline-block;
-  width: auto;
-  max-width: calc(100% - 20px); /* Ensure consistent width and space */
+.message:not(.self) {
+  align-self: flex-end; /* Align others' messages to the right */
 }
 
 #messageInputContainer {
