@@ -1,5 +1,5 @@
 body {
-  background-image: url('/blue_skies.jpg');
+  background-image: url('blue_skies.jpg');
   background-size: cover;
   background-position: center;
   filter: blur(8px); 
