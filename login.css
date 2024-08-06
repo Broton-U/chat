@@ -1,5 +1,5 @@
 body {
-  background-image:'/blue_skies.jpg';
+  background-image:'blue_skies.jpg';
   fitler: blur(8px);
   color: #fff;
   display: flex;
