@@ -93,22 +93,17 @@ function displayMessages() {
   var messagesDiv = document.getElementById('messages');
   messagesDiv.innerHTML = ''; // Clear previous messages
 
-  // Fetch messages ordered by timestamp in ascending order
-  messagesRef.orderByChild('timestamp').on('value', function(snapshot) {
-    var messagesArray = [];
+  // Fetch the latest 20 messages ordered by timestamp in ascending order
+  messagesRef.orderByChild('timestamp').limitToLast(20).on('value', function(snapshot) {
+    var messages = [];
 
     snapshot.forEach(function(childSnapshot) {
       var messageData = childSnapshot.val();
-      messagesArray.push(messageData);
+      messages.push({ key: childSnapshot.key, ...messageData });
     });
 
-    // Sort messages by timestamp (ascending)
-    messagesArray.sort(function(a, b) {
-      return a.timestamp - b.timestamp;
-    });
-
-    // Display messages
-    messagesArray.forEach(function(messageData) {
+    // Display messages in order with newest at the bottom
+    messages.forEach(function(messageData) {
       usersRef.child(messageData.uuid).once('value', function(userSnapshot) {
         var userData = userSnapshot.val();
         var userName = userData ? userData.name : 'Unknown';
@@ -146,6 +141,7 @@ function displayMessages() {
     }
   });
 }
+
 
 function handleChatLock(isLocked) {
   var messageInput = document.getElementById('messageInput');
