@@ -52,8 +52,8 @@ body::before {
 
 .form-container h1 {
   margin-top: 0;
-  margin-bottom: 60px; /* Add more space below the heading */
-  margin-left: 40%;
+  margin-bottom: 109px; /* Add more space below the heading */
+  margin-left: 45%;
   font-weight: bolder;
   position: absolute;
   z-index: 2;
