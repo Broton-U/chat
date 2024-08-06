@@ -28,22 +28,24 @@ body {
   background-color: #3e3e3e;
   border-bottom: 1px solid #444;
   display: flex;
-  flex-direction: column-reverse; /* Display messages with the newest at the bottom */
+  flex-direction: column-reverse; /* Newest messages at the bottom */
 }
 
 .message {
   padding: 10px;
-  margin-bottom: 10px;
+  margin: 5px 0; /* Adjusted margin for spacing */
   border-radius: 5px;
+  max-width: 80%; /* Limit width to 80% of the container */
+  word-wrap: break-word; /* Wrap long words */
 }
 
 .self {
   background-color: #007bff;
-  align-self: flex-end;
+  align-self: flex-end; /* Align own messages to the end */
 }
 
-.default {
-  background-color: #4e4e4e;
+.default, .admin, .autistic, .idiots {
+  background-color: #4e4e4e; /* Default color */
 }
 
 .admin {
@@ -56,6 +58,13 @@ body {
 
 .idiots {
   background-color: #800080;
+}
+
+/* Ensures message containers have a consistent width */
+.message {
+  display: inline-block;
+  width: auto;
+  max-width: calc(100% - 20px); /* Ensure consistent width and space */
 }
 
 #messageInputContainer {
