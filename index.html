@@ -30,136 +30,111 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      function getUserUUID() {
-        var uuid = "";
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-          var cookie = cookies[i].trim();
-          if (cookie.startsWith("userUUID=")) {
-            uuid = cookie.substring("userUUID=".length);
-            break;
-          }
+    // Firebase configuration
+    firebase.initializeApp({
+      apiKey: "AIzaSyDB2sNW2w-kvwOaqYJ-6Pojd79j1rRzgDw",
+      authDomain: "chat-71251.firebaseapp.com",
+      databaseURL: "https://chat-71251-default-rtdb.firebaseio.com",
+      projectId: "chat-71251",
+      storageBucket: "chat-71251.appspot.com",
+      messagingSenderId: "290327153997"
+    });
+
+    var database = firebase.database();
+    var usersRef = database.ref('users');
+
+    function getUserUUID() {
+      var uuid = "";
+      var cookies = document.cookie.split(';');
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i].trim();
+        if (cookie.startsWith("userUUID=")) {
+          uuid = cookie.substring("userUUID=".length);
+          break;
         }
-        return uuid;
       }
+      return uuid;
+    }
 
-      var uuid = getUserUUID();
-      if (uuid) {
-        window.location.href = 'chat.html';
+    function setCookie(name, value, days) {
+      var expires = "";
+      if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toUTCString();
       }
+      document.cookie = name + "=" + (value || "") + expires + "; path=/";
+    }
 
-      // Firebase configuration
-      var firebaseConfig = {
-        apiKey: "your-api-key",
-        authDomain: "your-auth-domain",
-        projectId: "your-project-id",
-        storageBucket: "your-storage-bucket",
-        messagingSenderId: "your-messaging-sender-id",
-        appId: "your-app-id",
-        databaseURL: "your-database-url"
-      };
+    function showLogin() {
+      document.getElementById('loginForm').style.display = 'block';
+      document.getElementById('signupForm').style.display = 'none';
+    }
 
-      // Initialize Firebase
-      firebase.initializeApp(firebaseConfig);
-      var database = firebase.database();
-      var usersRef = database.ref('users');
+    function showSignup() {
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('signupForm').style.display = 'block';
+    }
 
-      function showLogin() {
-        document.getElementById('loginForm').style.display = 'block';
-        document.getElementById('signupForm').style.display = 'none';
-      }
-
-      function showSignup() {
-        document.getElementById('loginForm').style.display = 'none';
-        document.getElementById('signupForm').style.display = 'block';
-      }
-
-      function login() {
-        var loginName = document.getElementById('loginName').value.trim();
-        var password = document.getElementById('password').value.trim();
-        if (loginName && password) {
-          var lowerCaseName = loginName.toLowerCase();
-          authenticateUser(lowerCaseName, password, function(success, userUUID) {
-            if (success) {
-              document.cookie = "userUUID=" + userUUID + ";path=/";
+    function login() {
+      var name = document.getElementById('loginName').value.trim().toLowerCase();
+      var password = document.getElementById('password').value;
+      
+      usersRef.orderByChild('nameLower').equalTo(name).once('value', function(snapshot) {
+        if (snapshot.exists()) {
+          snapshot.forEach(function(childSnapshot) {
+            var userData = childSnapshot.val();
+            if (userData.password === password) {
+              setCookie('userUUID', childSnapshot.key, 1);
               window.location.href = 'chat.html';
             } else {
-              alert("Invalid name or password.");
+              alert("Wrong password, try again.");
             }
           });
         } else {
-          alert("Please enter both name and password.");
+          alert("User does not exist.");
         }
-      }
+      });
+    }
 
-      function signup() {
-        var signupName = document.getElementById('signupName').value.trim();
-        var signupPassword = document.getElementById('signupPassword').value.trim();
-        if (signupName && signupPassword) {
-          var lowerCaseName = signupName.toLowerCase();
-          checkUserName(lowerCaseName, function(exists) {
-            if (exists) {
-              alert("Name taken, please choose another.");
+    function signup() {
+      var name = document.getElementById('signupName').value.trim();
+      var password = document.getElementById('signupPassword').value;
+      var lowerCaseName = name.toLowerCase();
+
+      usersRef.orderByChild('nameLower').equalTo(lowerCaseName).once('value', function(snapshot) {
+        if (snapshot.exists()) {
+          alert("Name taken, please choose another.");
+        } else {
+          var userUUID = generateUUID();
+          usersRef.child(userUUID).set({ 
+            name: name, 
+            nameLower: lowerCaseName, 
+            role: "default", 
+            password: password 
+          }, function(error) {
+            if (error) {
+              alert("Error creating user.");
             } else {
-              var userUUID = generateUUID();
-              document.cookie = "userUUID=" + userUUID + ";path=/";
-              usersRef.child(userUUID).set({
-                name: signupName,
-                nameLower: lowerCaseName,
-                role: "default",
-                password: signupPassword
-              }, function(error) {
-                if (error) {
-                  alert("Error creating user.");
-                } else {
-                  window.location.href = 'chat.html';
-                }
-              });
+              setCookie('userUUID', userUUID, 1);
+              window.location.href = 'chat.html';
             }
           });
-        } else {
-          alert("Please enter both name and password.");
         }
-      }
+      });
+    }
 
-      function checkUserName(userName, callback) {
-        var query = usersRef.orderByChild('nameLower').equalTo(userName);
-        query.once('value', function(snapshot) {
-          callback(snapshot.exists());
-        });
-      }
+    function generateUUID() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
 
-      function authenticateUser(userName, password, callback) {
-        var query = usersRef.orderByChild('nameLower').equalTo(userName);
-        query.once('value', function(snapshot) {
-          if (snapshot.exists()) {
-            snapshot.forEach(function(childSnapshot) {
-              var userData = childSnapshot.val();
-              if (userData.password === password) {
-                callback(true, childSnapshot.key);
-              } else {
-                callback(false, null);
-              }
-            });
-          } else {
-            callback(false, null);
-          }
-        });
-      }
-
-      function generateUUID() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-          var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-          return v.toString(16);
-        });
-      }
-
-      window.login = login;
-      window.signup = signup;
-      window.showLogin = showLogin;
-      window.showSignup = showSignup;
-    });
+    // Redirect if user is already logged in
+    if (getUserUUID()) {
+      window.location.href = 'chat.html';
+    }
   </script>
 </body>
 </html>
