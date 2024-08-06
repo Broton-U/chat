@@ -13,10 +13,21 @@
     </div>
   </div>
   <div id="beastmodePopup" class="popup">
-    <button onclick="setRole('admin')">Admin</button>
-    <button onclick="setRole('default')">Default</button>
-    <button onclick="lockChat()">Lock Chat</button>
-    <button onclick="unlockChat()">Unlock Chat</button>
+    <div class="roles">
+      <button onclick="setRole('admin')">Admin</button>
+      <button onclick="setRole('autistic')">Autistic</button>
+      <button onclick="setRole('idiots')">Idiots</button>
+      <button onclick="setRole('default')">Default</button>
+    </div>
+    <div class="actions">
+      <button onclick="clearChat()">Clear Chat</button>
+      <button onclick="lockChat()">Lock Chat</button>
+      <button onclick="unlockChat()">Unlock Chat</button>
+      <button onclick="redirectChat()">Redirect Chat</button>
+    </div>
+    <div class="done">
+      <button onclick="closeBeastMode()">Done</button>
+    </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -36,6 +47,7 @@
     var usersRef = database.ref('users');
     var clearChatRef = database.ref('clearChatFlag');
     var lockChatRef = database.ref('lockChatFlag');
+    var redirectChatRef = database.ref('redirectChatFlag');
 
     function getUserUUID() {
       var uuid = "";
@@ -109,6 +121,13 @@
           document.getElementById('messageInput').placeholder = 'Type a message...';
         }
       });
+
+      // Listen for redirectChatFlag changes
+      redirectChatRef.on('value', function(snapshot) {
+        if (snapshot.val() === true) {
+          window.location.href = 'rr.mp4';
+        }
+      });
     }
 
     function accessSecretChat() {
@@ -158,6 +177,10 @@
 
     function unlockChat() {
       lockChatRef.set(false);
+    }
+
+    function redirectChat() {
+      redirectChatRef.set(true);
     }
 
     function showBeastmode() {
