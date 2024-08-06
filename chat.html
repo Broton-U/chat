@@ -80,9 +80,7 @@ function sendMessage() {
   var message = messageInput.value.trim();
   var userUUID = getUserUUID();
   if (message !== '' && userUUID) {
-    // Generate a new unique key using Firebase's push method
-    var newMessageRef = messagesRef.push();
-    newMessageRef.set({
+    messagesRef.push().set({
       message: message,
       uuid: userUUID,
       timestamp: Date.now() // Store timestamp as a number
@@ -166,7 +164,6 @@ window.accessSecretChat = accessSecretChat;
 window.clearChat = clearChat;
 window.showBeastmode = showBeastmode;
 window.closeBeastMode = closeBeastMode;
-
-  </script>
+ </script>
 </body>
 </html>
