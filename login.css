@@ -66,9 +66,11 @@ body::before {
 .form-container label,
 .form-container input,
 .form-container button {
+  width: 100%; /* Ensure the inputs and buttons take full width of the form-container */
   margin-bottom: 15px; /* Increase spacing between elements */
 }
 
+/* Specific styling for inputs */
 .form-container input {
   padding: 15px; /* Increase padding for larger input fields */
   border: 1px solid #555;
@@ -77,6 +79,7 @@ body::before {
   color: #fff;
 }
 
+/* Specific styling for buttons */
 .form-container button {
   padding: 15px; /* Increase padding for larger buttons */
   border: none;
