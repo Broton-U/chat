@@ -2,77 +2,10 @@
 <html>
 <head>
   <title>Chicken Chat</title>
+    <link rel="stylesheet" type="text/css" href="chat.css">
   <!-- Import Firebase libraries from CDN -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <style>
-    body {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
-    }
-    .chat-container {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      padding: 20px;
-      background-color: #ffffff;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      overflow: auto;
-      margin: 20px;
-      position: relative;
-    }
-    .message {
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 5px;
-      text-align: left; /* Ensures text alignment is left */
-    }
-    .message.default {
-      background-color: #e0e0e0;
-    }
-    .message.ChickenMan {
-      background-color: #f8d7da;
-    }
-    .message.Idiots {
-      background-color: #e2a8e2;
-    }
-    .input-container {
-      display: flex;
-      padding: 10px;
-      background-color: #fff;
-      border-top: 1px solid #ddd;
-      position: absolute;
-      bottom: 0;
-      width: calc(100% - 40px);
-      left: 20px;
-    }
-    .input-container input {
-      flex: 1;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      margin-right: 10px;
-    }
-    .input-container button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .input-container .back-button {
-      background-color: #f8d7da;
-      color: #721c24;
-      margin-left: 10px; /* Ensure spacing between input field and button */
-    }
-    .input-container .back-button:hover {
-      background-color: #f5c6cb;
-    }
-  </style>
 </head>
 <body>
   <script>
