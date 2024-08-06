@@ -52,8 +52,8 @@ body::before {
 
 .form-container h1 {
   margin-top: 0;
-  margin-bottom: 30px; /* Add more space below the heading */
-  margin-left: 50%;
+  margin-bottom: 60px; /* Add more space below the heading */
+  margin-left: 40%;
   font-weight: bolder;
   position: absolute;
   z-index: 2;
@@ -80,6 +80,7 @@ body::before {
   background-color: #666;
   color: #fff;
   cursor: pointer;
+  font-size: 10px;
 }
 
 .form-container button:hover {
