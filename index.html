@@ -1,17 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Who dis</title>
+  <title>Who Dis</title>
   <link rel="stylesheet" type="text/css" href="login.css">
 </head>
 <body>
-  <div id="loginContainer">
-    <h1>Welcome to the Chat</h1>
-    <p>Please log in or sign up.</p>
-    <button onclick="promptForLoginOrSignup()">Log In / Sign Up</button>
+  <div id="loginSignupContainer">
+    <div id="loginForm" class="form-container">
+      <h2>Login</h2>
+      <label for="loginName">Name:</label>
+      <input type="text" id="loginName" name="loginName" placeholder="Enter your name">
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" placeholder="Enter your password">
+      <button onclick="login()">Login</button>
+      <button onclick="showSignup()">Sign Up</button>
+    </div>
+
+    <div id="signupForm" class="form-container" style="display: none;">
+      <h2>Sign Up</h2>
+      <label for="signupName">Name:</label>
+      <input type="text" id="signupName" name="signupName" placeholder="Enter your name">
+      <label for="signupPassword">Password:</label>
+      <input type="password" id="signupPassword" name="signupPassword" placeholder="Enter your password">
+      <button onclick="signup()">Sign Up</button>
+      <button onclick="showLogin()">Login</button>
+    </div>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <script>
+    // Firebase configuration
+    firebase.initializeApp({
+      apiKey: "AIzaSyDB2sNW2w-kvwOaqYJ-6Pojd79j1rRzgDw",
+      authDomain: "chat-71251.firebaseapp.com",
+      databaseURL: "https://chat-71251-default-rtdb.firebaseio.com",
+      projectId: "chat-71251",
+      storageBucket: "chat-71251.appspot.com",
+      messagingSenderId: "290327153997"
+    });
+
+    var database = firebase.database();
+    var usersRef = database.ref('users');
+
     function getUserUUID() {
       var uuid = "";
       var cookies = document.cookie.split(';');
@@ -25,70 +56,57 @@
       return uuid;
     }
 
-    function redirectIfLoggedIn() {
+    function redirectToChat() {
+      window.location.href = 'chat.html';
+    }
+
+    function checkRedirect() {
       var uuid = getUserUUID();
       if (uuid) {
-        window.location.href = 'chat.html';
+        redirectToChat();
       }
     }
 
-    function promptForLoginOrSignup() {
-      var action = prompt("Login or Signup? (Type 'login' or 'signup')");
-      if (action === 'signup') {
-        promptForUserName(true);
-      } else if (action === 'login') {
-        promptForUserName(false);
-      } else {
-        alert("Invalid choice.");
-      }
+    function login() {
+      var name = document.getElementById('loginName').value.trim().toLowerCase();
+      var password = document.getElementById('password').value;
+      authenticateUser(name, password, function(success) {
+        if (success) {
+          document.cookie = "userUUID=" + name + ";path=/"; // Set cookie
+          redirectToChat();
+        } else {
+          alert("Invalid credentials.");
+        }
+      });
     }
 
-    function promptForUserName(isSignup) {
-      var userName = prompt("Enter your name:");
-      if (userName) {
-        userName = userName.trim();
-        var lowerCaseName = userName.toLowerCase();
-        checkUserName(lowerCaseName, isSignup, function(exists) {
-          if (exists && isSignup) {
-            alert("Name taken, please choose another.");
-            promptForUserName(true);
-          } else if (exists && !isSignup) {
-            promptForPassword(function(password) {
-              authenticateUser(lowerCaseName, password, function(success) {
-                if (success) {
-                  window.location.href = 'chat.html';
-                } else {
-                  alert("Wrong password, try again.");
-                  promptForUserName(false);
-                }
-              });
-            });
-          } else {
-            var password = prompt("Enter a password:");
-            var userUUID = generateUUID();
-            document.cookie = "userUUID=" + userUUID + ";path=/";
-            usersRef.child(userUUID).set({ name: userName, nameLower: lowerCaseName, role: "default", password: password }, function(error) {
-              if (error) {
-                alert("Error creating user.");
-              } else {
-                window.location.href = 'chat.html';
-              }
-            });
-          }
-        });
-      }
+    function signup() {
+      var name = document.getElementById('signupName').value.trim();
+      var password = document.getElementById('signupPassword').value;
+      var lowerCaseName = name.toLowerCase();
+
+      checkUserName(lowerCaseName, function(exists) {
+        if (exists) {
+          alert("Name taken, please choose another.");
+        } else {
+          var userUUID = generateUUID();
+          document.cookie = "userUUID=" + userUUID + ";path=/"; // Set cookie
+          usersRef.child(userUUID).set({ name: name, nameLower: lowerCaseName, password: password, role: 'default' }, function(error) {
+            if (error) {
+              alert("Error creating user.");
+            } else {
+              redirectToChat();
+            }
+          });
+        }
+      });
     }
 
-    function checkUserName(userName, isSignup, callback) {
+    function checkUserName(userName, callback) {
       var query = usersRef.orderByChild('nameLower').equalTo(userName);
       query.once('value', function(snapshot) {
         callback(snapshot.exists());
       });
-    }
-
-    function promptForPassword(callback) {
-      var password = prompt("Enter your password:");
-      callback(password);
     }
 
     function authenticateUser(userName, password, callback) {
@@ -98,7 +116,7 @@
           snapshot.forEach(function(childSnapshot) {
             var userData = childSnapshot.val();
             if (userData.password === password) {
-              document.cookie = "userUUID=" + childSnapshot.key + ";path=/";
+              document.cookie = "userUUID=" + childSnapshot.key + ";path=/"; // Set cookie
               callback(true);
             } else {
               callback(false);
@@ -117,8 +135,8 @@
       });
     }
 
-    // Redirect if logged in
-    redirectIfLoggedIn();
+    // Check for existing UUID and redirect if necessary
+    checkRedirect();
   </script>
 </body>
 </html>
