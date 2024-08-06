@@ -1,64 +1,85 @@
-/* chat.css */
 body {
+  background-color: #1e1e1e;
+  color: #f0f0f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
   margin: 0;
   font-family: Arial, sans-serif;
-  background-color: #e5e5e5;
 }
 
 #chatContainer {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  width: 100%;
+  width: 80%;
   max-width: 1200px;
-  margin: auto;
-  background-color: #ffffff;
-  border: 1px solid #ddd;
+  height: 90%;
+  background-color: #2e2e2e;
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
 }
 
-#messageContainer {
-  flex: 1;
-  overflow-y: auto;
+#messages {
+  flex-grow: 1;
   padding: 10px;
-  background-color: #f9f9f9;
+  overflow-y: auto;
+  background-color: #3e3e3e;
+  border-bottom: 1px solid #444;
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: column-reverse; /* Newest messages at the bottom */
 }
 
 .message {
   padding: 10px;
-  margin-bottom: 10px;
+  margin: 5px 0; /* Adjusted margin for spacing */
   border-radius: 5px;
-  max-width: 80%;
-  word-wrap: break-word;
+  max-width: 80%; /* Limit width to 80% of the container */
+  word-wrap: break-word; /* Wrap long words */
 }
 
-.my-message {
-  background-color: #d1ffd1;
-  align-self: flex-start;
-  margin-left: auto;
+.self {
+  background-color: #007bff;
+  align-self: flex-start; /* Align own messages to the left */
 }
 
-.other-message {
-  background-color: #f1f1f1;
-  align-self: flex-end;
+.default, .admin, .autistic, .idiots {
+  background-color: #4e4e4e; /* Default color */
+}
+
+.admin {
+  background-color: #ff4e4e;
+}
+
+.autistic {
+  background-color: #00008b;
+}
+
+.idiots {
+  background-color: #800080;
+}
+
+.message:not(.self) {
+  align-self: flex-end; /* Align others' messages to the right */
+}
+
+#messageInputContainer {
+  display: flex;
+  padding: 10px;
+  background-color: #2e2e2e;
 }
 
 #messageInput {
-  display: flex;
+  flex-grow: 1;
   padding: 10px;
-  background-color: #ffffff;
-  border-top: 1px solid #ddd;
-}
-
-#messageText {
-  flex: 1;
-  padding: 10px;
-  border: 1px solid #ddd;
+  border: none;
   border-radius: 5px;
   margin-right: 10px;
+}
+
+#messageInput:disabled {
+  background-color: #555;
 }
 
 button {
