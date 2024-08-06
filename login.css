@@ -1,43 +1,66 @@
+/* Style for the body and the background */
 body {
-  background-image: url('blue_skies.jpg');
-  background-size: cover;
-  background-position: center;
-  filter: blur(8px); /* Fixed typo here */
-  color: #fff;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  height: 100vh;
+  overflow: hidden; /* Prevent scrolling if background is large */
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  margin: 0;
-  font-family: Arial, sans-serif;
+  background-color: #000; /* Fallback color */
 }
 
+body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('blue_skies.jpg');
+  background-size: cover;
+  background-position: center;
+  filter: blur(8px);
+  z-index: -1; /* Place the background behind everything else */
+}
+
+/* Style for the login/signup container */
 #loginSignupContainer {
-  background-color: #444;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  background-color: rgba(68, 68, 68, 0.8); /* Slightly transparent background for better readability */
+  border-radius: 15px; /* Increase border radius for a more rounded look */
+  padding: 30px; /* Increase padding for more space inside the container */
+  width: 400px; /* Increase width */
+  max-width: 90%; /* Ensure it’s responsive */
+  height: 500px; /* Increase height */
+  max-height: 80%; /* Ensure it’s responsive */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Slightly larger shadow for emphasis */
   position: relative;
-  z-index: 1; /* Ensure the container is above the blurred background */
+  z-index: 1; /* Ensure it's on top of the blurred background */
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center align contents */
+  justify-content: center; /* Center align contents */
 }
 
 .form-container {
   display: flex;
   flex-direction: column;
+  width: 100%; /* Make the form-container occupy full width of the container */
 }
 
 .form-container h2 {
   margin-top: 0;
+  margin-bottom: 20px; /* Add more space below the heading */
 }
 
 .form-container label,
 .form-container input,
 .form-container button {
-  margin-bottom: 10px;
+  margin-bottom: 15px; /* Increase spacing between elements */
 }
 
 .form-container input {
-  padding: 10px;
+  padding: 15px; /* Increase padding for larger input fields */
   border: 1px solid #555;
   border-radius: 5px;
   background-color: #222;
@@ -45,7 +68,7 @@ body {
 }
 
 .form-container button {
-  padding: 10px;
+  padding: 15px; /* Increase padding for larger buttons */
   border: none;
   border-radius: 5px;
   background-color: #666;
