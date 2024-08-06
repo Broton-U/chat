@@ -13,7 +13,7 @@ body {
   display: flex;
   flex-direction: column;
   width: 80%;
-  max-width: 1000px;
+  max-width: 1200px;
   height: 90%;
   background-color: #2e2e2e;
   border-radius: 10px;
@@ -45,15 +45,15 @@ body {
 }
 
 .admin {
-  background-color: #d9534f;
+  background-color: #ff4e4e;
 }
 
 .autistic {
-  background-color: #f0ad4e;
+  background-color: #00008b;
 }
 
 .idiots {
-  background-color: #5bc0de;
+  background-color: #800080;
 }
 
 #messageInputContainer {
@@ -122,4 +122,33 @@ button:hover {
 
 .popup .done button {
   width: 50%;
+}
+
+.admin-role {
+  background-color: #ff4e4e;
+}
+
+.autistic-role {
+  background-color: #00008b;
+}
+
+.idiots-role {
+  background-color: #800080;
+}
+
+.clear-chat {
+  background-color: #008080;
+}
+
+.lock-chat {
+  background-color: #ff0000;
+}
+
+.unlock-chat {
+  background-color: #00ff00;
+}
+
+.redirect-chat {
+  background-color: #ffffff;
+  color: #000;
 }
