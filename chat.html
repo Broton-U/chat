@@ -93,17 +93,20 @@
       messagesDiv.innerHTML = ''; // Clear previous messages
 
       // Fetch messages sorted by timestamp
-      messagesRef.orderByChild('timestamp').on('child_added', function(snapshot) {
-        var messageData = snapshot.val();
-        usersRef.child(messageData.uuid).once('value', function(userSnapshot) {
-          var userData = userSnapshot.val();
-          var userName = userData ? userData.name : 'Unknown';
-          var userRole = userData ? userData.role : 'default';
-          var messageElement = document.createElement('div');
-          messageElement.textContent = userName + ": " + messageData.message;
-          messageElement.className = 'message ' + userRole + (messageData.uuid === getUserUUID() ? ' self' : '');
-          messagesDiv.appendChild(messageElement);
+      messagesRef.orderByChild('timestamp').once('value', function(snapshot) {
+        snapshot.forEach(function(childSnapshot) {
+          var messageData = childSnapshot.val();
+          usersRef.child(messageData.uuid).once('value', function(userSnapshot) {
+            var userData = userSnapshot.val();
+            var userName = userData ? userData.name : 'Unknown';
+            var userRole = userData ? userData.role : 'default';
+            var messageElement = document.createElement('div');
+            messageElement.textContent = userName + ": " + messageData.message;
+            messageElement.className = 'message ' + userRole + (messageData.uuid === getUserUUID() ? ' self' : '');
+            messagesDiv.appendChild(messageElement);
+          });
         });
+        messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to bottom
       });
 
       // Listen for clearChatFlag changes
