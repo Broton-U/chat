@@ -1,13 +1,12 @@
 document.addEventListener('DOMContentLoaded', function() {
   var firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
+  apiKey: "AIzaSyDB2sNW2w-kvwOaqYJ-6Pojd79j1rRzgDw",
+  authDomain: "chat-71251.firebaseapp.com",
+  databaseURL: "https://chat-71251-default-rtdb.firebaseio.com",
+  projectId: "chat-71251",
+  storageBucket: "chat-71251.appspot.com",
+  messagingSenderId: "290327153997"
+});
   firebase.initializeApp(firebaseConfig);
   var database = firebase.database();
   var usersRef = database.ref('users');
