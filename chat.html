@@ -106,9 +106,11 @@
             messageElement.textContent = userName + ": " + messageData.message;
             messageElement.className = 'message ' + userRole + (messageData.uuid === getUserUUID() ? ' self' : '');
             messagesDiv.appendChild(messageElement);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to bottom
           });
+
         });
+        // Scroll to bottom after messages have been updated
+        messagesDiv.scrollTop = messagesDiv.scrollHeight; 
       });
 
       // Listen for clearChatFlag changes
