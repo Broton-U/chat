@@ -79,10 +79,11 @@
       var message = messageInput.value.trim();
       var userUUID = getUserUUID();
       if (message !== '' && userUUID) {
-        messagesRef.push().set({
+        var timestamp = new Date().toISOString(); // Save timestamp as ISO 8601 string
+        messagesRef.child(timestamp).set({
           message: message,
           uuid: userUUID,
-          timestamp: new Date().toISOString() // Save timestamp in ISO 8601 format
+          timestamp: timestamp
         });
         messageInput.value = '';
       }
@@ -92,8 +93,8 @@
       var messagesDiv = document.getElementById('messages');
       messagesDiv.innerHTML = ''; // Clear previous messages
 
-      // Fetch messages sorted by timestamp in ascending order
-      messagesRef.orderByChild('timestamp').on('value', function(snapshot) {
+      // Fetch messages sorted by timestamp (keys) in ascending order
+      messagesRef.orderByKey().on('value', function(snapshot) {
         messagesDiv.innerHTML = ''; // Clear previous messages
 
         snapshot.forEach(function(childSnapshot) {
@@ -107,8 +108,8 @@
             messageElement.className = 'message ' + userRole + (messageData.uuid === getUserUUID() ? ' self' : '');
             messagesDiv.appendChild(messageElement);
           });
-
         });
+
         // Scroll to bottom after messages have been updated
         messagesDiv.scrollTop = messagesDiv.scrollHeight; 
       });
@@ -169,10 +170,11 @@
 
     function clearChat() {
       messagesRef.remove().then(function() {
-        messagesRef.push().set({
+        var timestamp = new Date().toISOString(); // Save timestamp as ISO 8601 string
+        messagesRef.child(timestamp).set({
           message: "Chat cleared",
           uuid: "3ba4223a-e921-474f-b8ec-1b34d081ba9f", // Admin UUID
-          timestamp: new Date().toISOString() // Save timestamp in ISO 8601 format
+          timestamp: timestamp
         }).then(function() {
           clearChatRef.set(true); // Set the flag to true to notify all users
         });
