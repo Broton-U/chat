@@ -79,11 +79,12 @@ function sendMessage() {
   var message = messageInput.value.trim();
   var userUUID = getUserUUID();
   if (message !== '' && userUUID) {
-    var messageRef = messagesRef.push(); // Create a new unique key
-    messageRef.set({
+    // Generate a new unique key using Firebase's push method
+    var newMessageRef = messagesRef.push();
+    newMessageRef.set({
       message: message,
       uuid: userUUID,
-      timestamp: Date.now() // Save timestamp as a number
+      timestamp: Date.now() // Store timestamp as a number
     });
     messageInput.value = '';
   }
@@ -93,7 +94,7 @@ function displayMessages() {
   var messagesDiv = document.getElementById('messages');
   messagesDiv.innerHTML = ''; // Clear previous messages
 
-  // Fetch messages sorted by timestamp (numerical value) in ascending order
+  // Fetch messages ordered by timestamp in ascending order
   messagesRef.orderByChild('timestamp').on('value', function(snapshot) {
     messagesDiv.innerHTML = ''; // Clear previous messages
 
@@ -137,23 +138,17 @@ function displayMessages() {
   });
 }
 
+function handleChatLock(isLocked) {
+  var messageInput = document.getElementById('messageInput');
+  if (isLocked) {
+    messageInput.disabled = true;
+    messageInput.placeholder = 'CHAT IS LOCKED';
+  } else {
+    messageInput.disabled = false;
+    messageInput.placeholder = 'Type a message...';
+  }
+}
 
-    function handleChatLock(isLocked) {
-      var userUUID = getUserUUID();
-      usersRef.child(userUUID).once('value', function(userSnapshot) {
-        var userData = userSnapshot.val();
-        var userRole = userData ? userData.role : 'default';
-        var messageInput = document.getElementById('messageInput');
-
-        if (isLocked && userRole !== 'admin') {
-          messageInput.disabled = true;
-          messageInput.placeholder = 'CHAT IS LOCKED';
-        } else {
-          messageInput.disabled = false;
-          messageInput.placeholder = 'Type a message...';
-        }
-      });
-    }
 
     function accessSecretChat() {
       if (document.cookie.split(';').some((item) => item.trim().startsWith('cpizza='))) {
