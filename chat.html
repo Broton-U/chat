@@ -107,11 +107,10 @@ function displayMessages() {
           messageElement.textContent = userName + ": " + messageData.message;
           messageElement.className = 'message ' + userRole + (messageData.uuid === getUserUUID() ? ' self' : '');
           messagesDiv.appendChild(messageElement);
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
         });
       }
     });
-
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
   });
 
   clearChatRef.on('value', function(snapshot) {
