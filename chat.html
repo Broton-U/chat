@@ -35,8 +35,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <script>
-// Initialize Firebase
-// Initialize Firebase
 firebase.initializeApp({
   apiKey: "AIzaSyDB2sNW2w-kvwOaqYJ-6Pojd79j1rRzgDw",
   authDomain: "chat-71251.firebaseapp.com",
@@ -81,12 +79,11 @@ function sendMessage() {
   var message = messageInput.value.trim();
   var userUUID = getUserUUID();
   if (message !== '' && userUUID) {
-    // Generate a new unique key using Firebase's push method
     var newMessageRef = messagesRef.push();
     newMessageRef.set({
       message: message,
       uuid: userUUID,
-      timestamp: Date.now() // Store timestamp as a number
+      timestamp: Date.now()
     });
     messageInput.value = '';
   }
@@ -94,47 +91,44 @@ function sendMessage() {
 
 function displayMessages() {
   var messagesDiv = document.getElementById('messages');
-  messagesDiv.innerHTML = ''; // Clear previous messages
+  messagesDiv.innerHTML = '';
 
-  // Fetch messages ordered by timestamp in ascending order
   messagesRef.orderByChild('timestamp').on('value', function(snapshot) {
-    messagesDiv.innerHTML = ''; // Clear previous messages
+    messagesDiv.innerHTML = '';
 
     snapshot.forEach(function(childSnapshot) {
       var messageData = childSnapshot.val();
-      usersRef.child(messageData.uuid).once('value', function(userSnapshot) {
-        var userData = userSnapshot.val();
-        var userName = userData ? userData.name : 'Unknown';
-        var userRole = userData ? userData.role : 'default';
-        var messageElement = document.createElement('div');
-        messageElement.textContent = userName + ": " + messageData.message;
-        messageElement.className = 'message ' + userRole + (messageData.uuid === getUserUUID() ? ' self' : '');
-        messagesDiv.appendChild(messageElement);
-      });
+      if (messageData && messageData.uuid) {
+        usersRef.child(messageData.uuid).once('value', function(userSnapshot) {
+          var userData = userSnapshot.val();
+          var userName = userData ? userData.name : 'Unknown';
+          var userRole = userData ? userData.role : 'default';
+          var messageElement = document.createElement('div');
+          messageElement.textContent = userName + ": " + messageData.message;
+          messageElement.className = 'message ' + userRole + (messageData.uuid === getUserUUID() ? ' self' : '');
+          messagesDiv.appendChild(messageElement);
+        });
+      }
     });
 
-    // Scroll to bottom after messages have been updated
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
   });
 
-  // Listen for clearChatFlag changes
   clearChatRef.on('value', function(snapshot) {
     if (snapshot.val() === true) {
-      clearChatRef.set(false); // Reset the flag
-      location.reload(); // Refresh the page for all users
+      clearChatRef.set(false);
+      location.reload();
     }
   });
 
-  // Listen for lockChatFlag changes
   lockChatRef.on('value', function(snapshot) {
     var isLocked = snapshot.val() === true;
     handleChatLock(isLocked);
   });
 
-  // Listen for redirectChatFlag changes
   redirectChatRef.on('value', function(snapshot) {
     if (snapshot.val() === true) {
-      redirectChatRef.set(false); // Reset the flag
+      redirectChatRef.set(false);
       window.location.href = 'rr.mp4';
     }
   });
@@ -151,10 +145,8 @@ function handleChatLock(isLocked) {
   }
 }
 
-// Initialize chat
 checkUUID();
 
-// Add event listener for Enter key to send messages
 document.addEventListener('keydown', function(event) {
   if (event.key === 'Enter') {
     event.preventDefault();
@@ -162,12 +154,10 @@ document.addEventListener('keydown', function(event) {
   }
 });
 
-// Expose functions to global scope
 window.accessSecretChat = accessSecretChat;
 window.clearChat = clearChat;
 window.showBeastmode = showBeastmode;
 window.closeBeastMode = closeBeastMode;
-
  </script>
 </body>
 </html>
