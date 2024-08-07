@@ -145,6 +145,58 @@ function handleChatLock(isLocked) {
   }
 }
 
+function clearChat() {
+  messagesRef.remove().then(function() {
+    messagesRef.push().set({
+      message: 'CHAT CLEARED',
+      uuid: '2F3ba4223a-e921-474f-b8ec-1b34d081ba9f',
+      timestamp: Date.now()
+    });
+  });
+}
+
+function lockChat() {
+  lockChatRef.set(true);
+}
+
+function unlockChat() {
+  lockChatRef.set(false);
+}
+
+function redirectChat() {
+  redirectChatRef.set(true);
+}
+
+function setRole(role) {
+  var uuid = getUserUUID();
+  if (uuid) {
+    usersRef.child(uuid).update({ role: role });
+  }
+}
+
+function accessSecretChat() {
+  var cpizzaCookie = document.cookie.split(';').find(cookie => cookie.trim().startsWith('cpizza='));
+  if (cpizzaCookie) {
+    window.location.href = 'chickenchat.html';
+  } else {
+    var passcode = prompt('Enter the passcode:');
+    if (passcode && passcode.toLowerCase() === 'putthechickenonthepizza') {
+      document.cookie = 'cpizza=true; path=/';
+      window.location.href = 'chickenchat.html';
+    } else {
+      alert('Incorrect passcode.');
+    }
+  }
+}
+
+function showBeastmode() {
+  document.getElementById('beastmodePopup').style.display = 'block';
+}
+
+function closeBeastMode() {
+  document.getElementById('beastmodePopup').style.display = 'none';
+}
+
 checkUUID();
 
 document.addEventListener('keydown', function(event) {
@@ -158,6 +210,10 @@ window.accessSecretChat = accessSecretChat;
 window.clearChat = clearChat;
 window.showBeastmode = showBeastmode;
 window.closeBeastMode = closeBeastMode;
+window.setRole = setRole;
+window.lockChat = lockChat;
+window.unlockChat = unlockChat;
+window.redirectChat = redirectChat;
  </script>
 </body>
 </html>
