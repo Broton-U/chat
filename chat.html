@@ -96,21 +96,29 @@ function displayMessages() {
   messagesRef.orderByChild('timestamp').on('value', function(snapshot) {
     messagesDiv.innerHTML = '';
 
+    var messagesArray = [];
     snapshot.forEach(function(childSnapshot) {
       var messageData = childSnapshot.val();
       if (messageData && messageData.uuid) {
-        usersRef.child(messageData.uuid).once('value', function(userSnapshot) {
-          var userData = userSnapshot.val();
-          var userName = userData ? userData.name : 'Unknown';
-          var userRole = userData ? userData.role : 'default';
-          var messageElement = document.createElement('div');
-          messageElement.textContent = userName + ": " + messageData.message;
-          messageElement.className = 'message ' + userRole + (messageData.uuid === getUserUUID() ? ' self' : '');
-          messagesDiv.appendChild(messageElement);
-          messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        });
+        messagesArray.push(messageData);
       }
     });
+
+    messagesArray.reverse();
+
+    messagesArray.forEach(function(messageData) {
+      usersRef.child(messageData.uuid).once('value', function(userSnapshot) {
+        var userData = userSnapshot.val();
+        var userName = userData ? userData.name : 'Unknown';
+        var userRole = userData ? userData.role : 'default';
+        var messageElement = document.createElement('div');
+        messageElement.textContent = userName + ": " + messageData.message;
+        messageElement.className = 'message ' + userRole + (messageData.uuid === getUserUUID() ? ' self' : '');
+        messagesDiv.appendChild(messageElement);
+      });
+    });
+
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
   });
 
   clearChatRef.on('value', function(snapshot) {
@@ -148,7 +156,7 @@ function clearChat() {
   messagesRef.remove().then(function() {
     messagesRef.push().set({
       message: 'CHAT CLEARED',
-      uuid: '2F3ba4223a-e921-474f-b8ec-1b34d081ba9f',
+      uuid: '3ba4223a-e921-474f-b8ec-1b34d081ba9f',
       timestamp: Date.now()
     });
   });
