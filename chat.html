@@ -34,7 +34,7 @@
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <script>
+<script>
 // Initialize Firebase
 firebase.initializeApp({
   apiKey: "AIzaSyDB2sNW2w-kvwOaqYJ-6Pojd79j1rRzgDw",
@@ -100,6 +100,10 @@ function sendMessage() {
       timestamp: Date.now(),
       time: getCurrentTime(),
       date: getCurrentDate()
+    }).then(function() {
+      // Scroll to the bottom after sending a message
+      var messagesDiv = document.getElementById('messages');
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
     messageInput.value = '';
   }
@@ -135,6 +139,7 @@ function displayMessages() {
       });
     });
 
+    // Scroll to the bottom after messages have been added
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
   });
 
@@ -243,3 +248,4 @@ window.redirectChat = redirectChat;
  </script>
 </body>
 </html>
+
