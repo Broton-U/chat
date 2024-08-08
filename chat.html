@@ -1,225 +1,39 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat</title>
-  <link rel="stylesheet" type="text/css" href="chat.css">
+  <link rel="stylesheet" href="chat.css">
 </head>
 <body>
-  <div id="chatContainer" style="display: none;">
+  <div id="chatContainer">
     <div id="messages"></div>
     <div id="messageInputContainer">
-      <input type="text" id="messageInput" placeholder="Type a message...">
-      <button onclick="accessSecretChat()">Secret</button>
+      <input type="text" id="messageInput" placeholder="Type a message..." onkeydown="if(event.key === 'Enter') sendMessage();">
+      <button onclick="sendMessage()">Send</button>
     </div>
   </div>
-  <div id="beastmodePopup" class="popup">
-    <div class="popup-content">
-      <div class="roles">
-        <button class="role-button admin-role" onclick="setRole('admin')">Admin</button>
-        <button class="role-button autistic-role" onclick="setRole('autistic')">Autistic</button>
-        <button class="role-button idiots-role" onclick="setRole('idiots')">Idiots</button>
-        <button class="role-button default-role" onclick="setRole('default')">Default</button>
-      </div>
-      <div class="actions">
-        <button class="action-button clear-chat" onclick="clearChat()">Clear Chat</button>
-        <button class="action-button lock-chat" onclick="lockChat()">Lock Chat</button>
-        <button class="action-button unlock-chat" onclick="unlockChat()">Unlock Chat</button>
-        <button class="action-button redirect-chat" onclick="redirectChat()">Redirect Chat</button>
-      </div>
-      <div class="done">
-        <button class="done-button" onclick="closeBeastMode()">Done</button>
-      </div>
+
+  <div id="beastModePanel" class="popup">
+    <div class="roles">
+      <button class="admin-role" onclick="setRole('admin')">Admin Role</button>
+      <button class="autistic-role" onclick="setRole('autistic')">Autistic Role</button>
+      <button class="idiots-role" onclick="setRole('idiots')">Idiots Role</button>
+    </div>
+    <div class="actions">
+      <button class="clear-chat" onclick="clearChat()">Clear Chat</button>
+      <button class="lock-chat" onclick="lockChat()">Lock Chat</button>
+      <button class="unlock-chat" onclick="unlockChat()">Unlock Chat</button>
+      <button class="redirect-chat" onclick="accessSecretChat()">Secret Chat</button>
+    </div>
+    <div class="done">
+      <button onclick="closeBeastMode()">Done</button>
     </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <script>
-    // Initialize Firebase
-    firebase.initializeApp({
-      apiKey: "YOUR_API_KEY",
-      authDomain: "chat-71251.firebaseapp.com",
-      databaseURL: "https://chat-71251-default-rtdb.firebaseio.com",
-      projectId: "chat-71251",
-      storageBucket: "chat-71251.appspot.com",
-      messagingSenderId: "290327153997"
-    });
-
-    var database = firebase.database();
-    var messagesRef = database.ref('messages');
-    var usersRef = database.ref('users');
-    var clearChatRef = database.ref('clearChatFlag');
-    var lockChatRef = database.ref('lockChatFlag');
-    var redirectChatRef = database.ref('redirectChatFlag');
-
-    function getUserUUID() {
-      var uuid = "";
-      var cookies = document.cookie.split(';');
-      for (var i = 0; i < cookies.length; i++) {
-        var cookie = cookies[i].trim();
-        if (cookie.startsWith("userUUID=")) {
-          uuid = cookie.substring("userUUID=".length);
-          break;
-        }
-      }
-      return uuid;
-    }
-
-    function checkUUID() {
-      var uuid = getUserUUID();
-      if (!uuid) {
-        window.location.href = 'index.html';
-      } else {
-        document.getElementById('chatContainer').style.display = 'flex';
-        displayMessages();
-      }
-    }
-
-    function sendMessage() {
-      var messageInput = document.getElementById('messageInput');
-      var message = messageInput.value.trim();
-      var userUUID = getUserUUID();
-      if (message !== '' && userUUID) {
-        // Generate a new unique key using Firebase's push method
-        var newMessageRef = messagesRef.push();
-        var timestamp = new Date();
-        var time = timestamp.toTimeString().slice(0, 8).replace(/:/g, '');
-        var date = timestamp.toISOString().slice(0, 10);
-        
-        newMessageRef.set({
-          message: message,
-          uuid: userUUID,
-          time: time,
-          date: date,
-          timestamp: timestamp.getTime() // Store timestamp as a number
-        });
-        messageInput.value = '';
-      }
-    }
-
-    function displayMessages() {
-      var messagesDiv = document.getElementById('messages');
-      messagesDiv.innerHTML = '';
-
-      // Fetch messages and store them in an array
-      messagesRef.once('value', function(snapshot) {
-        var messagesArray = [];
-
-        snapshot.forEach(function(childSnapshot) {
-          var messageData = childSnapshot.val();
-          if (messageData && messageData.uuid) {
-            messagesArray.push(messageData);
-          }
-        });
-
-        // Sort the messages by date and time
-        messagesArray.sort(function(a, b) {
-          var dateA = a.date + a.time;
-          var dateB = b.date + b.time;
-          return dateA.localeCompare(dateB);
-        });
-
-        // Display the messages in the correct order
-        messagesArray.forEach(function(messageData) {
-          usersRef.child(messageData.uuid).once('value', function(userSnapshot) {
-            var userData = userSnapshot.val();
-            var userName = userData ? userData.name : 'Unknown';
-            var userRole = userData ? userData.role : 'default';
-            var messageElement = document.createElement('div');
-            messageElement.innerHTML = `
-              <span class="timestamp">${messageData.time} ${messageData.date}</span>
-              <span class="message-content">${userName}: ${messageData.message}</span>
-            `;
-            messageElement.className = 'message ' + userRole + (messageData.uuid === getUserUUID() ? ' self' : '');
-            messagesDiv.appendChild(messageElement);
-          });
-        });
-
-        // Scroll to the bottom after messages have been added
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      });
-    }
-
-    function clearChat() {
-      messagesRef.remove();
-      clearChatRef.set(true);
-    }
-
-    function lockChat() {
-      lockChatRef.set(true);
-    }
-
-    function unlockChat() {
-      lockChatRef.set(false);
-    }
-
-    function redirectChat() {
-      redirectChatRef.set(true);
-    }
-
-    function handleChatLock(isLocked) {
-      var messageInput = document.getElementById('messageInput');
-      if (isLocked) {
-        messageInput.disabled = true;
-        messageInput.placeholder = 'CHAT IS LOCKED';
-      } else {
-        messageInput.disabled = false;
-        messageInput.placeholder = 'Type a message...';
-      }
-    }
-
-    function accessSecretChat() {
-      // Access secret chat logic here
-    }
-
-    function showBeastmode() {
-      document.getElementById('beastmodePopup').style.display = 'block';
-    }
-
-    function closeBeastMode() {
-      document.getElementById('beastmodePopup').style.display = 'none';
-    }
-
-    function setRole(role) {
-      var userUUID = getUserUUID();
-      if (userUUID) {
-        usersRef.child(userUUID).update({ role: role });
-      }
-    }
-
-    // Initialize chat
-    checkUUID();
-
-    // Add event listener for Enter key to send messages
-    document.addEventListener('keydown', function(event) {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        sendMessage();
-      }
-    });
-
-    // Listen for clearChatFlag changes
-    clearChatRef.on('value', function(snapshot) {
-      if (snapshot.val() === true) {
-        clearChatRef.set(false); // Reset the flag
-        location.reload(); // Refresh the page for all users
-      }
-    });
-
-    // Listen for lockChatFlag changes
-    lockChatRef.on('value', function(snapshot) {
-      var isLocked = snapshot.val() === true;
-      handleChatLock(isLocked);
-    });
-
-    // Listen for redirectChatFlag changes
-    redirectChatRef.on('value', function(snapshot) {
-      if (snapshot.val() === true) {
-        redirectChatRef.set(false); // Reset the flag
-        window.location.href = 'rr.mp4';
-      }
-    });
-
-  </script>
+  <script src="chat.js"></script>
 </body>
 </html>
