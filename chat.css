@@ -29,10 +29,42 @@ body {
   border-bottom: 1px solid #444;
 }
 
+#messageInputContainer {
+  display: flex;
+  padding: 10px;
+  background-color: #2e2e2e;
+}
+
+#messageInput {
+  flex-grow: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  margin-right: 10px;
+}
+
+#messageInput:disabled {
+  background-color: #555;
+}
+
+button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
 .message {
   padding: 10px;
   margin-bottom: 10px;
   border-radius: 5px;
+  word-break: break-word;
 }
 
 .self {
@@ -55,6 +87,7 @@ body {
 .idiots {
   background-color: #800080;
 }
+
 
 #messageInputContainer {
   display: flex;
