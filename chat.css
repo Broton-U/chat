@@ -54,10 +54,12 @@ button {
   background-color: #007bff;
   color: white;
   cursor: pointer;
+  transition: 3s;
 }
 
 button:hover {
   background-color: #0056b3;
+  transform: scale(1.1);
 }
 
 .message {
