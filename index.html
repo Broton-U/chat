@@ -8,8 +8,8 @@
   <div id="loginSignupContainer">
     <div id="loginForm" class="form-container">
       <h1>Login</h1>
-      <label for="loginName">Name:</label>
-      <input type="text" id="loginName" name="loginName" placeholder="Enter your name">
+      <label for="loginEmail">School Email:</label>
+      <input type="email" id="loginEmail" name="loginEmail" placeholder="Enter your school email">
       <label for="password">Password:</label>
       <input type="password" id="password" name="password" placeholder="Enter your password">
       <button style="background-color: #04AF70; color: white;" onclick="login()">Login</button>
@@ -30,44 +30,22 @@
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <script>
     // Firebase configuration
-    firebase.initializeApp({
+    var firebaseConfig = {
       apiKey: "AIzaSyDB2sNW2w-kvwOaqYJ-6Pojd79j1rRzgDw",
       authDomain: "chat-71251.firebaseapp.com",
       databaseURL: "https://chat-71251-default-rtdb.firebaseio.com",
       projectId: "chat-71251",
       storageBucket: "chat-71251.appspot.com",
       messagingSenderId: "290327153997"
-    });
-
+    };
+    firebase.initializeApp(firebaseConfig);
+    var auth = firebase.auth();
     var database = firebase.database();
-    var usersRef = database.ref('users');
-
-    function getUserUUID() {
-      var uuid = "";
-      var cookies = document.cookie.split(';');
-      for (var i = 0; i < cookies.length; i++) {
-        var cookie = cookies[i].trim();
-        if (cookie.startsWith("userUUID=")) {
-          uuid = cookie.substring("userUUID=".length);
-          break;
-        }
-      }
-      return uuid;
-    }
-
-    function setCookie(name, value, days) {
-      var expires = "";
-      if (days) {
-        var date = new Date();
-        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-        expires = "; expires=" + date.toUTCString();
-      }
-      document.cookie = name + "=" + (value || "") + expires + "; path=/";
-    }
-
+    
     function showLogin() {
       document.getElementById('loginForm').style.display = 'block';
       document.getElementById('signupForm').style.display = 'none';
@@ -79,72 +57,52 @@
     }
 
     function login() {
-      var name = document.getElementById('loginName').value.trim().toLowerCase();
+      var email = document.getElementById('loginEmail').value;
       var password = document.getElementById('password').value;
-      
-      usersRef.orderByChild('nameLower').equalTo(name).once('value', function(snapshot) {
-        if (snapshot.exists()) {
-          snapshot.forEach(function(childSnapshot) {
-            var userData = childSnapshot.val();
-            if (userData.password === password) {
-              setCookie('userUUID', childSnapshot.key, 1);
-              window.location.href = 'chat.html';
-            } else {
-              alert("Wrong password, try again.");
-            }
-          });
-        } else {
-          alert("User does not exist.");
-        }
-      });
+      auth.signInWithEmailAndPassword(email, password)
+        .then(userCredential => {
+          // Successful login
+          window.location.href = 'chat.html';
+        })
+        .catch(error => {
+          alert("Login failed: " + error.message);
+        });
     }
 
     function signup() {
       var name = document.getElementById('signupName').value.trim();
-      var email = document.getElementById('signupEmail').value.trim();
+      var email = document.getElementById('signupEmail').value;
       var password = document.getElementById('signupPassword').value;
-      var lowerCaseName = name.toLowerCase();
 
-      // Validate email
       if (!email.endsWith('2029@hvgs.nsw.edu.au')) {
         alert("Invalid email address.");
         return;
       }
 
-      usersRef.orderByChild('nameLower').equalTo(lowerCaseName).once('value', function(snapshot) {
-        if (snapshot.exists()) {
-          alert("Name taken, please choose another.");
-        } else {
-          var userUUID = generateUUID();
-          usersRef.child(userUUID).set({ 
-            name: name, 
-            nameLower: lowerCaseName, 
-            role: "default", 
-            password: password,
-            email: email // Store email in the database
-          }, function(error) {
-            if (error) {
-              alert("Error creating user.");
-            } else {
-              setCookie('userUUID', userUUID, 1);
-              window.location.href = 'chat.html';
-            }
-          });
-        }
-      });
-    }
+      auth.createUserWithEmailAndPassword(email, password)
+        .then(userCredential => {
+          var user = userCredential.user;
+          var userUUID = user.uid;
 
-    function generateUUID() {
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-      });
+          database.ref('users/' + userUUID).set({
+            name: name,
+            nameLower: name.toLowerCase(),
+            role: "default",
+            email: email
+          });
+          window.location.href = 'chat.html';
+        })
+        .catch(error => {
+          alert("Signup failed: " + error.message);
+        });
     }
 
     // Redirect if user is already logged in
-    if (getUserUUID()) {
-      window.location.href = 'chat.html';
-    }
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        window.location.href = 'chat.html';
+      }
+    });
   </script>
 </body>
 </html>
