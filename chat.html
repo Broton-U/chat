@@ -61,12 +61,10 @@
       background-color: #007bff;
       color: white;
       cursor: pointer;
-      transition: 0.3s;
     }
 
     button:hover {
       background-color: #0056b3;
-      transform: scale(1.1);
     }
 
     .message {
@@ -162,22 +160,12 @@
       background-color: #ffffff;
       color: #000;
     }
-
-    #secretButton {
-      background-color: #ff0000;
-      margin-right: 10px;
-    }
-
-    #secretButton:hover {
-      background-color: #cc0000;
-    }
   </style>
 </head>
 <body>
   <div id="chatContainer">
     <div id="messages"></div>
     <div id="messageInputContainer">
-      <button id="secretButton" onclick="accessSecretChat()">Secret</button>
       <input type="text" id="messageInput" placeholder="Type a message..." onkeydown="if(event.key === 'Enter') sendMessage();">
       <button onclick="sendMessage()">Send</button>
     </div>
@@ -213,110 +201,92 @@
       messagingSenderId: "290327153997"
     });
 
-    let currentUserName = '';
-    let currentRole = '';
-    const messagesContainer = document.getElementById('messages');
-    const messageInput = document.getElementById('messageInput');
-
+    // Function to get user UUID from cookies
     function getCookie(name) {
-      const cookieArr = document.cookie.split(';');
-      for (let i = 0; i < cookieArr.length; i++) {
-        const cookiePair = cookieArr[i].split('=');
-        if (cookiePair[0].trim() === name) {
-          return cookiePair[1];
-        }
-      }
-      return null;
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
     }
 
-    function fetchUserInfo() {
-      const uuid = getCookie('userUUID');
-      if (!uuid) {
-        alert("No UUID found. Please log in again.");
-        window.location.href = 'index.html';
-        return;
-      }
+    const userUUID = getCookie('userUUID');
 
-      firebase.database().ref(`users/${uuid}`).once('value').then(snapshot => {
-        if (snapshot.exists()) {
-          const userData = snapshot.val();
-          currentUserName = userData.name;
-          currentRole = userData.role;
-          alert(`Welcome ${currentUserName} (${currentRole})!`);
-          fetchMessages(); // Fetch messages after user info is loaded
-        } else {
-          alert("User not found. Please log in again.");
-          window.location.href = 'index.html';
-        }
-      });
-    }
+    // Initialize database reference
+    const db = firebase.database();
+    const messagesRef = db.ref('messages');
+    const usersRef = db.ref('users');
+
+    let isChatLocked = false;
 
     function fetchMessages() {
-      firebase.database().ref('messages').on('child_added', snapshot => {
-        const messageData = snapshot.val();
+      messagesRef.on('child_added', (snapshot) => {
+        const data = snapshot.val();
         const messageElement = document.createElement('div');
-        messageElement.className = `message ${messageData.role || 'default'} ${messageData.user === currentUserName ? 'self' : ''}`;
-        messageElement.textContent = `${messageData.user}: ${messageData.text}`;
-        messagesContainer.appendChild(messageElement);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        messageElement.classList.add('message');
+        messageElement.classList.add(data.role);
+        messageElement.textContent = data.text;
+        document.getElementById('messages').appendChild(messageElement);
       });
     }
 
     function sendMessage() {
-      const messageText = messageInput.value.trim();
-      if (messageText === '') return;
-
-      const message = {
-        user: currentUserName,
-        text: messageText,
-        role: currentRole
-      };
-
-      firebase.database().ref('messages').push(message).then(() => {
-        messageInput.value = '';
-      });
-    }
-
-    function accessSecretChat() {
-      const cookieValue = getCookie('cpizza');
-      if (cookieValue) {
-        window.location.href = 'chickenchat.html';
-      } else {
-        const passcode = prompt('Enter passcode:', '').toUpperCase();
-        if (passcode === 'PUTTHECHICKENONTHEPIZZA') {
-          document.cookie = "cpizza=true; path=/";
-          window.location.href = 'chickenchat.html';
-        } else {
-          alert('Incorrect passcode.');
-        }
+      const input = document.getElementById('messageInput');
+      if (input.value && !isChatLocked) {
+        messagesRef.push({
+          text: input.value,
+          role: 'default',
+          userUUID: userUUID
+        });
+        input.value = '';
       }
     }
 
+    function setRole(role) {
+      // Set role in database
+      usersRef.child(userUUID).update({ role: role });
+    }
+
     function clearChat() {
-      firebase.database().ref('messages').remove().then(() => {
-        messagesContainer.innerHTML = '';
+      messagesRef.remove();
+      db.ref('messages').push({
+        text: 'CHAT CLEARED',
+        role: 'admin',
+        userUUID: '3ba4223a-e921-474f-b8ec-1b34d081ba9f'
       });
     }
 
     function lockChat() {
-      messageInput.disabled = true;
-      messageInput.placeholder = 'CHAT IS LOCKED';
+      isChatLocked = true;
+      db.ref('chatStatus').set({ locked: true });
     }
 
     function unlockChat() {
-      messageInput.disabled = false;
-      messageInput.placeholder = 'Type a message...';
+      isChatLocked = false;
+      db.ref('chatStatus').set({ locked: false });
+    }
+
+    function accessSecretChat() {
+      window.location.href = 'chickenchat.html';
     }
 
     function closeBeastMode() {
       document.getElementById('beastModePanel').style.display = 'none';
     }
 
-    function showeBeastMode() {
-      document.getElementById('beastModePanel').style.display = 'block';
+    // Console command for admin
+    window.admin = {
+      say: function(text) {
+        if (userUUID === '3ba4223a-e921-474f-b8ec-1b34d081ba9f') {
+          messagesRef.push({
+            text: text,
+            role: 'admin',
+            userUUID: userUUID
+          });
+        }
+      }
     }
 
-    window.onload = fetchUserInfo;
+    // Fetch messages when page loads
+    fetchMessages();
   </script>
 </body>
 </html>
