@@ -165,35 +165,6 @@
       width: 50%;
     }
 
-    .admin-role {
-      background-color: #ff4e4e;
-    }
-
-    .Autistic-role {
-      background-color: #00008b;
-    }
-
-    .idiots-role {
-      background-color: #800080;
-    }
-
-    .clear-chat {
-      background-color: #008080;
-    }
-
-    .lock-chat {
-      background-color: #ff0000;
-    }
-
-    .unlock-chat {
-      background-color: #00ff00;
-    }
-
-    .redirect-chat {
-      background-color: #ffffff;
-      color: #000;
-    }
-
     .welcomePopup {
       display: flex;
       flex-direction: column;
@@ -311,9 +282,8 @@
           Object.keys(messages).sort((a, b) => messages[a].timestamp.localeCompare(messages[b].timestamp)).forEach(key => {
             const messageData = messages[key];
             const messageElement = document.createElement('div');
-            const timestamp = messageData.timestamp;
-            messageElement.classList.add('message', messageData.role.toLowerCase());
-            messageElement.innerHTML = `<strong>${timestamp}</strong>: ${messageData.text} <br><small>[${messageData.role}]</small>`;
+            messageElement.classList.add('message', messageData.role);
+            messageElement.innerHTML = `<strong>${messageData.name} [${messageData.role}]</strong>: ${messageData.text}`;
             if (messageData.role === userRole) {
               messageElement.classList.add('self');
             }
@@ -330,6 +300,7 @@
         const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 17); // YYYYMMDDHHMMSSMS
         messagesRef.push({
           text: messageText,
+          name: userName,
           role: userRole,
           timestamp: timestamp
         });
@@ -341,6 +312,7 @@
       usersRef.child(userUUID).update({ role: role });
       userRole = role;
       document.querySelector('#welcomePopup').style.borderColor = getRoleColor(userRole);
+      loadMessages();
     }
 
     function clearChat() {
@@ -382,6 +354,7 @@
         const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 17); // YYYYMMDDHHMMSSMS
         messagesRef.push({
           text: text,
+          name: 'Admin',
           role: 'Admin',
           timestamp: timestamp
         });
