@@ -245,9 +245,10 @@
       Object.keys(messages).sort((a, b) => messages[a].timestamp.localeCompare(messages[b].timestamp)).forEach(key => {
         const message = messages[key];
         const messageElement = document.createElement('div');
-        messageElement.className = 'message ' + (message.role || 'default');
+        messageElement.className = 'message';
+        messageElement.style.backgroundColor = getRoleColor(message.role);
         messageElement.innerHTML = `
-          <div class="name">${message.name}</div>: 
+          <div class="name">${message.name} |</div>
           <div class="text">${message.text}</div>
         `;
         messagesDiv.appendChild(messageElement);
@@ -275,26 +276,11 @@
     }
   }
 
-  // Function to handle secret chat access
-  function accessSecretChat() {
-    const cookie = getCookie('cpizza');
-    if (cookie) {
-      window.location.href = 'chickenchat.html';
-    } else {
-      const passcode = prompt('Enter passcode:');
-      if (passcode && passcode.toLowerCase() === 'putthechickenonthepizza') {
-        document.cookie = 'cpizza=true; path=/';
-        window.location.href = 'chickenchat.html';
-      }
-    }
-  }
-
   // Function to set the user role in the database
   function setRole(role) {
     const userUUID = getCookie('userUUID');
     if (userUUID) {
       userRef.child(userUUID).update({ role: role });
-      document.getElementById('beastModePanel').style.display = 'none';
       fetchMessages();  // Refresh messages after role change
     }
   }
@@ -353,6 +339,20 @@
     if (parts.length === 2) return parts.pop().split(';').shift();
   }
 
+  // Function to get role color
+  function getRoleColor(role) {
+    switch(role) {
+      case 'Admin':
+        return '#ff4e4e';
+      case 'Autistic':
+        return '#00008b';
+      case 'Idiots':
+        return '#800080';
+      default:
+        return '#4e4e4e';
+    }
+  }
+
   // Function to show welcome message
   function showWelcomeMessage() {
     const lastLogin = getCookie('lastLogin');
@@ -362,13 +362,24 @@
     // Show popup only if last login was not today
     if (!lastLogin || lastLoginDate.toDateString() !== now.toDateString()) {
       document.getElementById('welcomeMessage').style.display = 'flex';
-      document.cookie = `lastLogin=${now.toISOString().split('T')[0]}; path=/`;
     }
+  }
+
+  // Function to update last login date
+  function updateLastLogin() {
+    const now = new Date().toISOString().split('T')[0];
+    document.cookie = `lastLogin=${now}; path=/`;
   }
 
   // Initialize chat
   fetchMessages();
   showWelcomeMessage();
+
+  // Attach event listener to close button
+  document.getElementById('closeWelcomeButton').addEventListener('click', () => {
+    document.getElementById('welcomeMessage').style.display = 'none';
+    updateLastLogin();
+  });
 </script>
 </body>
 </html>
