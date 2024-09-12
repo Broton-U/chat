@@ -57,7 +57,6 @@
       background-color: #007bff;
       color: white;
       cursor: pointer;
-      transition: 0.3s;
     }
 
     button:hover {
@@ -69,22 +68,6 @@
       margin-bottom: 10px;
       border-radius: 5px;
       word-break: break-word;
-      display: flex;
-      align-items: center;
-    }
-
-    .message .role {
-      font-weight: bold;
-      margin-right: 5px;
-    }
-
-    .message .name {
-      font-weight: bold;
-      margin-right: 5px;
-    }
-
-    .message .text {
-      flex: 1;
     }
 
     .self {
@@ -175,58 +158,57 @@
     }
 
     #welcomeMessage {
-      display: flex;
-      align-items: center;
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
       background-color: #2e2e2e;
-      border-radius: 10px;
-      padding: 15px;
-      margin: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      border: 3px solid #007bff; /* Role color border */
       color: #f0f0f0;
-      font-size: 18px;
-      text-align: center;
+      border: 2px solid #444;
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 1000;
     }
 
     #welcomeMessage .role {
-      font-size: 16px;
-      background-color: #007bff; /* Role color background */
-      color: #fff;
-      padding: 5px;
-      border-radius: 5px;
-      margin-right: 10px;
+      font-size: 0.8em;
+      margin-bottom: 5px;
     }
 
     #welcomeMessage .name {
-      font-weight: bold;
+      font-size: 1.2em;
     }
   </style>
 </head>
 <body>
+  <div id="welcomeMessage">
+    <div class="role">Role</div>
+    <div class="name">Welcome, Name</div>
+  </div>
+
   <div id="chatContainer">
-    <div id="welcomeMessage">
-      <div class="role">Role</div> <!-- Dynamically set role color -->
-      <div class="name">Welcome, Name</div> <!-- Dynamically set name -->
-    </div>
     <div id="messages"></div>
     <div id="messageInputContainer">
+      <button onclick="accessSecretChat()">Secret</button>
       <input type="text" id="messageInput" placeholder="Type a message..." onkeydown="if(event.key === 'Enter') sendMessage();">
       <button onclick="sendMessage()">Send</button>
-      <button id="secretButton" onclick="accessSecretChat()">Secret</button>
     </div>
   </div>
 
   <div id="beastModePanel" class="popup">
     <div class="roles">
-      <button class="admin-role" onclick="setRole('Admin')">Admin Role</button>
-      <button class="autistic-role" onclick="setRole('Autistic')">Autistic Role</button>
-      <button class="idiots-role" onclick="setRole('Idiots')">Idiots Role</button>
+      <button class="admin-role" onclick="setRole('admin')">Admin Role</button>
+      <button class="autistic-role" onclick="setRole('autistic')">Autistic Role</button>
+      <button class="idiots-role" onclick="setRole('idiots')">Idiots Role</button>
     </div>
     <div class="actions">
       <button class="clear-chat" onclick="clearChat()">Clear Chat</button>
       <button class="lock-chat" onclick="lockChat()">Lock Chat</button>
       <button class="unlock-chat" onclick="unlockChat()">Unlock Chat</button>
-      <button class="redirect-chat" onclick="accessSecretChat()">Redirect Chat</button>
+      <button class="redirect-chat" onclick="accessSecretChat()">Secret Chat</button>
     </div>
     <div class="done">
       <button onclick="closeBeastMode()">Done</button>
@@ -235,160 +217,158 @@
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <script>
-    // Initialize Firebase
-    firebase.initializeApp({
-      apiKey: "AIzaSyDB2sNW2w-kvwOaqYJ-6Pojd79j1rRzgDw",
-      authDomain: "chat-71251.firebaseapp.com",
-      databaseURL: "https://chat-71251-default-rtdb.firebaseio.com",
-      projectId: "chat-71251",
-      storageBucket: "chat-71251.appspot.com",
-      messagingSenderId: "290327153997"
+<script>
+  // Firebase initialization
+  firebase.initializeApp({
+    apiKey: "AIzaSyDB2sNW2w-kvwOaqYJ-6Pojd79j1rRzgDw",
+    authDomain: "chat-71251.firebaseapp.com",
+    databaseURL: "https://chat-71251-default-rtdb.firebaseio.com",
+    projectId: "chat-71251",
+    storageBucket: "chat-71251.appspot.com",
+    messagingSenderId: "290327153997"
+  });
+
+  const database = firebase.database();
+  const messagesRef = database.ref('messages');
+  const settingsRef = database.ref('chatSettings');
+  const userRef = database.ref('users');
+  const welcomeRef = database.ref('welcomeMessage');
+
+  // Function to fetch and display messages
+  function fetchMessages() {
+    messagesRef.on('value', snapshot => {
+      const messages = snapshot.val();
+      const messagesDiv = document.getElementById('messages');
+      messagesDiv.innerHTML = '';
+
+      // Sort messages by timestamp
+      Object.keys(messages).sort((a, b) => messages[a].timestamp.localeCompare(messages[b].timestamp)).forEach(key => {
+        const message = messages[key];
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message ' + (message.role || 'default');
+        messageElement.innerHTML = `
+          <div class="name">${message.name}</div>: 
+          <div class="text">${message.text}</div>
+        `;
+        messagesDiv.appendChild(messageElement);
+      });
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
+  }
 
-    const database = firebase.database();
-    const messagesRef = database.ref('messages');
-    const userUUID = getCookie('userUUID');
-    const roleColors = {
-      'Admin': '#ff4e4e',
-      'Autistic': '#00008b',
-      'Idiots': '#800080'
-    };
+  // Function to handle sending messages
+  function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const messageText = input.value.trim();
+    if (messageText) {
+      const timestamp = new Date().toISOString();
+      const role = getCookie('role') || 'default';
+      const name = getCookie('name') || 'Anonymous';
 
-    function getCookie(name) {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop().split(';').shift();
-    }
-
-    function fetchMessages() {
-      messagesRef.on('value', snapshot => {
-        const messages = snapshot.val();
-        const messagesDiv = document.getElementById('messages');
-        messagesDiv.innerHTML = '';
-        
-        Object.keys(messages).sort().forEach(key => {
-          const message = messages[key];
-          const messageElement = document.createElement('div');
-          const roleColor = roleColors[message.role] || '#2e2e2e';
-          messageElement.className = 'message ' + message.role.toLowerCase();
-          messageElement.style.backgroundColor = roleColor;
-          messageElement.innerHTML = `
-            <div class="role">${message.role}</div> | 
-            <div class="name">${message.name}</div>: 
-            <div class="text">${message.text}</div>
-          `;
-          messagesDiv.appendChild(messageElement);
-        });
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      });
-    }
-
-    function sendMessage() {
-      const input = document.getElementById('messageInput');
-      const messageText = input.value.trim();
-      if (messageText) {
-        const timestamp = new Date().toISOString();
-        const role = document.querySelector('.role').textContent.trim();
-        const name = document.querySelector('.name').textContent.trim();
-
-        messagesRef.push({
-          role: role,
-          name: name,
-          text: messageText,
-          timestamp: timestamp
-        });
-        input.value = '';
-      }
-    }
-
-    function accessSecretChat() {
-      const cookie = getCookie('cpizza');
-      if (cookie) {
-        window.location.href = 'chickenchat.html';
-      } else {
-        const passcode = prompt('Enter passcode:');
-        if (passcode && passcode.toLowerCase() === 'putthechickenonthepizza') {
-          document.cookie = 'cpizza=true; path=/';
-          window.location.href = 'chickenchat.html';
-        }
-      }
-    }
-
-    function setRole(role) {
-      document.cookie = `role=${role}; path=/`;
-      document.getElementById('beastModePanel').style.display = 'none';
-      fetchMessages();  // Refresh messages after role change
-    }
-
-    function clearChat() {
-      messagesRef.remove();
-    }
-
-    function lockChat() {
-      database.ref('chatSettings/locked').set(true);
-      messagesRef.push({
-        role: 'Admin',
-        name: 'System',
-        text: 'Chat is locked.',
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    function unlockChat() {
-      database.ref('chatSettings/locked').set(false);
-      messagesRef.push({
-        role: 'Admin',
-        name: 'System',
-        text: 'Chat is unlocked.',
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    function closeBeastMode() {
-      document.getElementById('beastModePanel').style.display = 'none';
-    }
-
-    function AdminSay(text) {
-      const adminUUID = '3ba4223a-e921-474f-b8ec-1b34d081ba9f';
-      const role = document.querySelector('.role').textContent.trim();
-      const name = 'Admin';
-      
       messagesRef.push({
         role: role,
         name: name,
-        text: text,
-        timestamp: new Date().toISOString(),
-        admin: adminUUID
+        text: messageText,
+        timestamp: timestamp
       });
+      input.value = '';
     }
+  }
 
-    function fetchMessages() {
-      messagesRef.on('value', snapshot => {
-        const messages = snapshot.val();
-        const messagesDiv = document.getElementById('messages');
-        messagesDiv.innerHTML = '';
-
-        // Sort messages by timestamp
-        Object.keys(messages).sort((a, b) => messages[a].timestamp.localeCompare(messages[b].timestamp)).forEach(key => {
-          const message = messages[key];
-          const roleColor = roleColors[message.role] || '#2e2e2e';
-          const messageElement = document.createElement('div');
-          messageElement.className = 'message ' + message.role.toLowerCase();
-          messageElement.style.backgroundColor = roleColor;
-          messageElement.innerHTML = `
-            <div class="role">${message.role}</div> |
-            <div class="name">${message.name}</div>: 
-            <div class="text">${message.text}</div>
-          `;
-          messagesDiv.appendChild(messageElement);
-        });
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      });
+  // Function to handle secret chat access
+  function accessSecretChat() {
+    const cookie = getCookie('cpizza');
+    if (cookie) {
+      window.location.href = 'chickenchat.html';
+    } else {
+      const passcode = prompt('Enter passcode:');
+      if (passcode && passcode.toLowerCase() === 'putthechickenonthepizza') {
+        document.cookie = 'cpizza=true; path=/';
+        window.location.href = 'chickenchat.html';
+      }
     }
+  }
 
-    // Initial fetch
-    fetchMessages();
-  </script>
+  // Function to set the user role in the database
+  function setRole(role) {
+    const userUUID = getCookie('userUUID');
+    if (userUUID) {
+      userRef.child(userUUID).update({ role: role });
+      document.getElementById('beastModePanel').style.display = 'none';
+      fetchMessages();  // Refresh messages after role change
+    }
+  }
+
+  // Function to clear the chat
+  function clearChat() {
+    messagesRef.remove();
+  }
+
+  // Function to lock the chat
+  function lockChat() {
+    settingsRef.child('locked').set(true);
+    messagesRef.push({
+      role: 'Admin',
+      name: 'System',
+      text: 'Chat is locked.',
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  // Function to unlock the chat
+  function unlockChat() {
+    settingsRef.child('locked').set(false);
+    messagesRef.push({
+      role: 'Admin',
+      name: 'System',
+      text: 'Chat is unlocked.',
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  // Function to close the Beast Mode panel
+  function closeBeastMode() {
+    document.getElementById('beastModePanel').style.display = 'none';
+  }
+
+  // Function to send a message as admin
+  function AdminSay(text) {
+    const adminUUID = '3ba4223a-e921-474f-b8ec-1b34d081ba9f';
+    const role = 'Admin';
+    const name = 'Admin';
+
+    messagesRef.push({
+      role: role,
+      name: name,
+      text: text,
+      timestamp: new Date().toISOString(),
+      admin: adminUUID
+    });
+  }
+
+  // Function to get a cookie value
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
+
+  // Function to show welcome message
+  function showWelcomeMessage() {
+    const lastLogin = getCookie('lastLogin');
+    const now = new Date();
+    const lastLoginDate = new Date(lastLogin);
+
+    // Show popup only if last login was not today
+    if (!lastLogin || lastLoginDate.toDateString() !== now.toDateString()) {
+      document.getElementById('welcomeMessage').style.display = 'flex';
+      document.cookie = `lastLogin=${now.toISOString().split('T')[0]}; path=/`;
+    }
+  }
+
+  // Initialize chat
+  fetchMessages();
+  showWelcomeMessage();
+</script>
 </body>
 </html>
