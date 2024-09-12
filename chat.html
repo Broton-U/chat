@@ -74,8 +74,6 @@
       margin-bottom: 10px;
       border-radius: 5px;
       word-break: break-word;
-      display: flex;
-      align-items: center;
     }
 
     .self {
@@ -87,7 +85,7 @@
       background-color: #4e4e4e;
     }
 
-    .Admin {
+    .admin {
       background-color: #ff4e4e;
     }
 
@@ -99,9 +97,35 @@
       background-color: #800080;
     }
 
-    .message .name {
-      font-weight: bold;
+    #messageInputContainer {
+      display: flex;
+      padding: 10px;
+      background-color: #2e2e2e;
+    }
+
+    #messageInput {
+      flex-grow: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
       margin-right: 10px;
+    }
+
+    #messageInput:disabled {
+      background-color: #555;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
     }
 
     .popup {
@@ -141,7 +165,7 @@
       width: 50%;
     }
 
-    .Admin-role {
+    .admin-role {
       background-color: #ff4e4e;
     }
 
@@ -149,7 +173,7 @@
       background-color: #00008b;
     }
 
-    .Idiots-role {
+    .idiots-role {
       background-color: #800080;
     }
 
@@ -170,21 +194,30 @@
       color: #000;
     }
 
-    .welcome-popup {
-      display: none;
+    .welcomePopup {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #2e2e2e;
+      border: 2px solid;
+      border-radius: 10px;
+      padding: 20px;
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background-color: #2e2e2e;
-      border: 5px solid;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      padding: 20px;
       z-index: 1000;
       width: 60%;
       max-width: 600px;
       text-align: center;
+    }
+
+    .welcomePopup h1 {
+      margin: 0;
+    }
+
+    .welcomePopup button {
+      margin-top: 10px;
     }
   </style>
 </head>
@@ -199,9 +232,9 @@
 
   <div id="beastModePanel" class="popup">
     <div class="roles">
-      <button class="Admin-role" onclick="setRole('Admin')">Admin Role</button>
+      <button class="admin-role" onclick="setRole('Admin')">Admin Role</button>
       <button class="Autistic-role" onclick="setRole('Autistic')">Autistic Role</button>
-      <button class="Idiots-role" onclick="setRole('Idiots')">Idiots Role</button>
+      <button class="idiots-role" onclick="setRole('Idiots')">Idiots Role</button>
     </div>
     <div class="actions">
       <button class="clear-chat" onclick="clearChat()">Clear Chat</button>
@@ -214,15 +247,15 @@
     </div>
   </div>
 
-  <div id="welcomePopup" class="welcome-popup">
-    <div id="welcomeMessage"></div>
+  <div id="welcomePopup" class="welcomePopup" style="display: none;">
+    <h1>Welcome, <span id="welcomeName">Name</span> <span id="welcomeRole">Role</span></h1>
     <button onclick="closeWelcomePopup()">Close</button>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script>
+    // Initialize Firebase
     firebase.initializeApp({
       apiKey: "AIzaSyDB2sNW2w-kvwOaqYJ-6Pojd79j1rRzgDw",
       authDomain: "chat-71251.firebaseapp.com",
@@ -232,99 +265,101 @@
       messagingSenderId: "290327153997"
     });
 
-    function fetchMessages() {
-      firebase.database().ref('messages').on('child_added', (snapshot) => {
-        const data = snapshot.val();
-        firebase.database().ref(`users/${data.userUUID}`).once('value', (userSnapshot) => {
-          const user = userSnapshot.val();
-          const messageElement = document.createElement('div');
-          messageElement.className = `message ${data.role}`;
-          messageElement.innerHTML = `<span class="name">${user.name}:</span> ${data.text}`;
-          document.getElementById('messages').appendChild(messageElement);
-        });
+    const db = firebase.database();
+    const messagesRef = db.ref('messages');
+    const usersRef = db.ref('users');
+
+    let userUUID = getCookie('userUUID');
+    let userName = '';
+    let userRole = '';
+
+    // Fetch and display welcome message
+    function fetchUserInfo() {
+      usersRef.child(userUUID).once('value').then(snapshot => {
+        const userInfo = snapshot.val();
+        if (userInfo) {
+          userName = userInfo.name;
+          userRole = userInfo.role;
+          document.getElementById('welcomeName').textContent = userName;
+          document.getElementById('welcomeRole').textContent = userRole;
+          document.querySelector('#welcomePopup').style.display = 'flex';
+          document.querySelector('#welcomePopup').style.borderColor = getRoleColor(userRole);
+          loadMessages();
+        }
+      });
+    }
+
+    function getRoleColor(role) {
+      switch (role) {
+        case 'Admin':
+          return '#ff4e4e';
+        case 'Autistic':
+          return '#00008b';
+        case 'Idiots':
+          return '#800080';
+        default:
+          return '#4e4e4e'; // Default color
+      }
+    }
+
+    function loadMessages() {
+      messagesRef.orderByChild('timestamp').on('child_added', function(snapshot) {
+        const messageData = snapshot.val();
+        const messageElement = document.createElement('div');
+        const messageDate = new Date(messageData.timestamp);
+        const timestamp = messageDate.toISOString().replace(/[-:.TZ]/g, "").slice(0, 17); // YYYYMMDDHHMMSSMS
+        messageElement.classList.add('message', messageData.role);
+        messageElement.innerHTML = `<strong>${timestamp}</strong>: ${messageData.text}`;
+        document.getElementById('messages').appendChild(messageElement);
       });
     }
 
     function sendMessage() {
       const messageInput = document.getElementById('messageInput');
-      const messageText = messageInput.value;
-      const userUUID = getCookie('userUUID');
-      const role = getRole(userUUID); // Function to get user role
-
-      if (messageText.trim()) {
-        firebase.database().ref('messages').push({
+      const messageText = messageInput.value.trim();
+      if (messageText) {
+        const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 17); // YYYYMMDDHHMMSSMS
+        messagesRef.push({
           text: messageText,
-          role: role,
-          userUUID: userUUID
+          role: userRole,
+          timestamp: timestamp
         });
         messageInput.value = '';
       }
     }
 
-    function getRole(userUUID) {
-      let role = 'default';
-      firebase.database().ref(`users/${userUUID}/role`).once('value', (snapshot) => {
-        role = snapshot.val() || 'default';
-      });
-      return role;
-    }
-
-    function lockChat() {
-      firebase.database().ref('chatLocked').set(true);
-    }
-
-    function unlockChat() {
-      firebase.database().ref('chatLocked').set(false);
+    function setRole(role) {
+      usersRef.child(userUUID).update({ role: role });
+      userRole = role;
+      document.querySelector('#welcomePopup').style.borderColor = getRoleColor(userRole);
     }
 
     function clearChat() {
-      firebase.database().ref('messages').remove();
+      messagesRef.remove();
+    }
+
+    function lockChat() {
+      db.ref('chat').update({ locked: true });
+    }
+
+    function unlockChat() {
+      db.ref('chat').update({ locked: false });
     }
 
     function accessSecretChat() {
-      if (getCookie('cpizza')) {
+      const passcode = prompt("Enter passcode:");
+      if (passcode && passcode.toUpperCase() === 'PUTTHECHICKENONTHEPIZZA') {
+        document.cookie = "cpizza=true";
         window.location.href = 'chickenchat.html';
-      } else {
-        const passcode = prompt('Enter passcode:');
-        if (passcode && passcode.toLowerCase() === 'putthechickenonthepizza') {
-          document.cookie = 'cpizza=true;path=/';
-          window.location.href = 'chickenchat.html';
-        } else {
-          alert('Incorrect passcode');
-        }
       }
-    }
-
-    function openBeastMode() {
-      document.getElementById('beastModePanel').style.display = 'block';
     }
 
     function closeBeastMode() {
       document.getElementById('beastModePanel').style.display = 'none';
     }
 
-    function showWelcomePopup() {
-      const userUUID = getCookie('userUUID');
-      firebase.database().ref(`users/${userUUID}`).once('value', (snapshot) => {
-        const user = snapshot.val();
-        const welcomeMessage = `Welcome, ${user.name} (${user.role})`;
-        document.getElementById('welcomeMessage').innerHTML = welcomeMessage;
-        document.getElementById('welcomePopup').style.borderColor = getRoleColor(user.role);
-        document.getElementById('welcomePopup').style.display = 'block';
-      });
-    }
-
     function closeWelcomePopup() {
       document.getElementById('welcomePopup').style.display = 'none';
-    }
-
-    function getRoleColor(role) {
-      switch(role) {
-        case 'Admin': return '#ff4e4e';
-        case 'Autistic': return '#00008b';
-        case 'Idiots': return '#800080';
-        default: return '#4e4e4e';
-      }
     }
 
     function getCookie(name) {
@@ -333,18 +368,9 @@
       if (parts.length === 2) return parts.pop().split(';').shift();
     }
 
-    function AdminSay(text) {
-      const adminUUID = '3ba4223a-e921-474f-b8ec-1b34d081ba9f';
-      firebase.database().ref('messages').push({
-        text: text,
-        role: 'Admin',
-        userUUID: adminUUID
-      });
-    }
-
-    // Initialize chat
-    fetchMessages();
-    showWelcomePopup();
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchUserInfo();
+    });
   </script>
 </body>
 </html>
