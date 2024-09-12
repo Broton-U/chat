@@ -248,7 +248,7 @@
   </div>
 
   <div id="welcomePopup" class="welcomePopup" style="display: none;">
-    <h1>Welcome, <span id="welcomeName">Name</span> <span id="welcomeRole">Role</span></h1>
+    <h1>Welcome, <span id="welcomeName">Name</span> <span id="welcomeRole">[Role]</span></h1>
     <button onclick="closeWelcomePopup()">Close</button>
   </div>
 
@@ -281,7 +281,7 @@
           userName = userInfo.name;
           userRole = userInfo.role;
           document.getElementById('welcomeName').textContent = userName;
-          document.getElementById('welcomeRole').textContent = userRole;
+          document.getElementById('welcomeRole').textContent = `[${userRole}]`;
           document.querySelector('#welcomePopup').style.display = 'flex';
           document.querySelector('#welcomePopup').style.borderColor = getRoleColor(userRole);
           loadMessages();
@@ -298,19 +298,28 @@
         case 'Idiots':
           return '#800080';
         default:
-          return '#4e4e4e'; // Default color
+          return '#4e4e4e';
       }
     }
 
     function loadMessages() {
-      messagesRef.orderByChild('timestamp').on('child_added', function(snapshot) {
-        const messageData = snapshot.val();
-        const messageElement = document.createElement('div');
-        const messageDate = new Date(messageData.timestamp);
-        const timestamp = messageDate.toISOString().replace(/[-:.TZ]/g, "").slice(0, 17); // YYYYMMDDHHMMSSMS
-        messageElement.classList.add('message', messageData.role);
-        messageElement.innerHTML = `<strong>${timestamp}</strong>: ${messageData.text}`;
-        document.getElementById('messages').appendChild(messageElement);
+      messagesRef.once('value', snapshot => {
+        const messages = snapshot.val();
+        const messagesContainer = document.getElementById('messages');
+        messagesContainer.innerHTML = '';
+        if (messages) {
+          Object.keys(messages).sort((a, b) => messages[a].timestamp.localeCompare(messages[b].timestamp)).forEach(key => {
+            const messageData = messages[key];
+            const messageElement = document.createElement('div');
+            const timestamp = messageData.timestamp;
+            messageElement.classList.add('message', messageData.role.toLowerCase());
+            messageElement.innerHTML = `<strong>${timestamp}</strong>: ${messageData.text} <br><small>[${messageData.role}]</small>`;
+            if (messageData.role === userRole) {
+              messageElement.classList.add('self');
+            }
+            messagesContainer.appendChild(messageElement);
+          });
+        }
       });
     }
 
@@ -366,6 +375,19 @@
       const value = `; ${document.cookie}`;
       const parts = value.split(`; ${name}=`);
       if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    function AdminSay(text) {
+      if (userRole === 'Admin' || userRole === 'Autistic') {
+        const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 17); // YYYYMMDDHHMMSSMS
+        messagesRef.push({
+          text: text,
+          role: 'Admin',
+          timestamp: timestamp
+        });
+      } else {
+        console.error('Only Admins or Autistic users can use AdminSay.');
+      }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
