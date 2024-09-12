@@ -61,10 +61,12 @@
       background-color: #007bff;
       color: white;
       cursor: pointer;
+      transition: 0.3s;
     }
 
     button:hover {
       background-color: #0056b3;
+      transform: scale(1.1);
     }
 
     .message {
@@ -101,7 +103,7 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background-color: #1e1e1e;
+      background-color: #2e2e2e;
       border: 1px solid #444;
       border-radius: 10px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -109,6 +111,7 @@
       z-index: 1000;
       width: 60%;
       max-width: 600px;
+      text-align: center;
     }
 
     .popup .roles,
@@ -164,36 +167,38 @@
     #welcomePopup {
       display: none;
       position: fixed;
-      top: 20%;
+      top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background-color: #333;
+      background-color: #2e2e2e;
       border: 1px solid #444;
       border-radius: 10px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       padding: 20px;
       z-index: 1000;
-      width: 60%;
-      max-width: 600px;
       text-align: center;
+      width: 60%;
+      max-width: 400px;
+    }
+
+    #welcomePopup h2 {
+      margin: 0;
+      padding: 0;
+      font-size: 24px;
     }
 
     #welcomePopup p {
-      margin: 0;
-      font-size: 18px;
-    }
-
-    #welcomePopup button {
-      margin-top: 20px;
+      margin: 10px 0 0;
     }
   </style>
 </head>
-<body>
+<body onload="showWelcomePopup()">
   <div id="chatContainer">
     <div id="messages"></div>
     <div id="messageInputContainer">
       <input type="text" id="messageInput" placeholder="Type a message..." onkeydown="if(event.key === 'Enter') sendMessage();">
       <button onclick="sendMessage()">Send</button>
+      <button onclick="openBeastMode()">Beast Mode</button>
     </div>
   </div>
 
@@ -215,14 +220,15 @@
   </div>
 
   <div id="welcomePopup" class="popup">
-    <p id="welcomeMessage"></p>
+    <h2>Welcome, <span id="userName"></span></h2>
+    <p>Role: <span id="userRole"></span></p>
     <button onclick="closeWelcomePopup()">Close</button>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <script>
-    // Initialize Firebase
+    // Firebase configuration
     firebase.initializeApp({
       apiKey: "AIzaSyDB2sNW2w-kvwOaqYJ-6Pojd79j1rRzgDw",
       authDomain: "chat-71251.firebaseapp.com",
@@ -232,106 +238,108 @@
       messagingSenderId: "290327153997"
     });
 
-    // Function to get user UUID from cookies
+    function sendMessage() {
+      const messageInput = document.getElementById('messageInput');
+      const messageText = messageInput.value.trim();
+      if (messageText === '') return;
+
+      const userUUID = getCookie('userUUID');
+      const userRole = getUserRole();
+
+      firebase.database().ref('messages').push({
+        text: messageText,
+        sender: userUUID,
+        role: userRole,
+        timestamp: Date.now()
+      });
+
+      messageInput.value = '';
+    }
+
     function getCookie(name) {
       const value = `; ${document.cookie}`;
       const parts = value.split(`; ${name}=`);
       if (parts.length === 2) return parts.pop().split(';').shift();
     }
 
-    const userUUID = getCookie('userUUID');
+    function getUserRole() {
+      const userUUID = getCookie('userUUID');
+      let role = '';
 
-    // Initialize database reference
-    const db = firebase.database();
-    const messagesRef = db.ref('messages');
-    const usersRef = db.ref('users');
-    const chatStatusRef = db.ref('chatStatus');
-
-    let isChatLocked = false;
-
-    function fetchMessages() {
-      messagesRef.on('child_added', (snapshot) => {
-        const data = snapshot.val();
-        const messageElement = document.createElement('div');
-        messageElement.classList.add('message');
-        messageElement.classList.add(data.role);
-        messageElement.textContent = data.text;
-        document.getElementById('messages').appendChild(messageElement);
+      firebase.database().ref('users/' + userUUID).once('value').then((snapshot) => {
+        role = snapshot.val().role;
       });
+
+      return role;
     }
 
-    function sendMessage() {
-      const input = document.getElementById('messageInput');
-      if (input.value && !isChatLocked) {
-        messagesRef.push({
-          text: input.value,
-          role: 'default',
-          userUUID: userUUID
-        });
-        input.value = '';
-      }
-    }
-
-    function setRole(role) {
-      // Set role in database
-      usersRef.child(userUUID).update({ role: role });
-    }
-
-    function clearChat() {
-      messagesRef.remove();
-      messagesRef.push({
-        text: 'CHAT CLEARED',
-        role: 'admin',
-        userUUID: '3ba4223a-e921-474f-b8ec-1b34d081ba9f'
+    function showWelcomePopup() {
+      const userUUID = getCookie('userUUID');
+      
+      firebase.database().ref('users/' + userUUID).once('value').then((snapshot) => {
+        const user = snapshot.val();
+        document.getElementById('userName').textContent = user.name;
+        document.getElementById('userRole').textContent = user.role;
+        document.getElementById('welcomePopup').style.display = 'block';
       });
-    }
-
-    function lockChat() {
-      isChatLocked = true;
-      chatStatusRef.set({ locked: true });
-    }
-
-    function unlockChat() {
-      isChatLocked = false;
-      chatStatusRef.set({ locked: false });
-    }
-
-    function accessSecretChat() {
-      window.location.href = 'chickenchat.html';
-    }
-
-    function closeBeastMode() {
-      document.getElementById('beastModePanel').style.display = 'none';
-    }
-
-    function openWelcomePopup(name, role) {
-      document.getElementById('welcomeMessage').textContent = `Welcome, ${name} (${role})`;
-      document.getElementById('welcomePopup').style.display = 'block';
     }
 
     function closeWelcomePopup() {
       document.getElementById('welcomePopup').style.display = 'none';
     }
 
-    // Console command for admin
-    window.isAdminSay = function(text) {
-      if (userUUID === '3ba4223a-e921-474f-b8ec-1b34d081ba9f') {
-        messagesRef.push({
-          text: text,
-          role: 'admin',
-          userUUID: userUUID
-        });
+    function openBeastMode() {
+      document.getElementById('beastModePanel').style.display = 'block';
+    }
+
+    function closeBeastMode() {
+      document.getElementById('beastModePanel').style.display = 'none';
+    }
+
+    function clearChat() {
+      firebase.database().ref('messages').remove();
+    }
+
+    function lockChat() {
+      firebase.database().ref('chatSettings').update({ isLocked: true });
+    }
+
+    function unlockChat() {
+      firebase.database().ref('chatSettings').update({ isLocked: false });
+    }
+
+    function accessSecretChat() {
+      const cookieValue = getCookie('cpizza');
+      if (cookieValue) {
+        window.location.href = 'chickenchat.html';
+      } else {
+        const passcode = prompt('Enter passcode:');
+        if (passcode === 'PUTTHECHICKENONTHEPIZZA') {
+          document.cookie = 'cpizza=true';
+          window.location.href = 'chickenchat.html';
+        } else {
+          alert('Invalid passcode.');
+        }
       }
     }
 
-    // Fetch messages when page loads
-    fetchMessages();
+    function AdminSay(text) {
+      const adminUUID = '3ba4223a-e921-474f-b8ec-1b34d081ba9f';
+      const userRole = getUserRole(); // Function to get the user's role
 
-    // Example usage to show the welcome popup
-    usersRef.child(userUUID).once('value').then(snapshot => {
-      const userData = snapshot.val();
-      openWelcomePopup(userData.name, userData.role);
-    });
+      if (userRole === 'admin' || userRole === 'autistic') {
+        firebase.database().ref('messages').push({
+          text: text,
+          sender: adminUUID,
+          timestamp: Date.now()
+        });
+      } else {
+        console.error("You don't have permission to use AdminSay.");
+      }
+    }
+
+    // Console command for AdminSay
+    window.AdminSay = AdminSay;
   </script>
 </body>
 </html>
