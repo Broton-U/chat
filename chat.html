@@ -160,6 +160,32 @@
       background-color: #ffffff;
       color: #000;
     }
+
+    #welcomePopup {
+      display: none;
+      position: fixed;
+      top: 20%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #333;
+      border: 1px solid #444;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      padding: 20px;
+      z-index: 1000;
+      width: 60%;
+      max-width: 600px;
+      text-align: center;
+    }
+
+    #welcomePopup p {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    #welcomePopup button {
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -188,6 +214,11 @@
     </div>
   </div>
 
+  <div id="welcomePopup" class="popup">
+    <p id="welcomeMessage"></p>
+    <button onclick="closeWelcomePopup()">Close</button>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <script>
@@ -214,6 +245,7 @@
     const db = firebase.database();
     const messagesRef = db.ref('messages');
     const usersRef = db.ref('users');
+    const chatStatusRef = db.ref('chatStatus');
 
     let isChatLocked = false;
 
@@ -247,7 +279,7 @@
 
     function clearChat() {
       messagesRef.remove();
-      db.ref('messages').push({
+      messagesRef.push({
         text: 'CHAT CLEARED',
         role: 'admin',
         userUUID: '3ba4223a-e921-474f-b8ec-1b34d081ba9f'
@@ -256,12 +288,12 @@
 
     function lockChat() {
       isChatLocked = true;
-      db.ref('chatStatus').set({ locked: true });
+      chatStatusRef.set({ locked: true });
     }
 
     function unlockChat() {
       isChatLocked = false;
-      db.ref('chatStatus').set({ locked: false });
+      chatStatusRef.set({ locked: false });
     }
 
     function accessSecretChat() {
@@ -272,21 +304,34 @@
       document.getElementById('beastModePanel').style.display = 'none';
     }
 
+    function openWelcomePopup(name, role) {
+      document.getElementById('welcomeMessage').textContent = `Welcome, ${name} (${role})`;
+      document.getElementById('welcomePopup').style.display = 'block';
+    }
+
+    function closeWelcomePopup() {
+      document.getElementById('welcomePopup').style.display = 'none';
+    }
+
     // Console command for admin
-    window.admin = {
-      say: function(text) {
-        if (userUUID === '3ba4223a-e921-474f-b8ec-1b34d081ba9f') {
-          messagesRef.push({
-            text: text,
-            role: 'admin',
-            userUUID: userUUID
-          });
-        }
+    window.isAdminSay = function(text) {
+      if (userUUID === '3ba4223a-e921-474f-b8ec-1b34d081ba9f') {
+        messagesRef.push({
+          text: text,
+          role: 'admin',
+          userUUID: userUUID
+        });
       }
     }
 
     // Fetch messages when page loads
     fetchMessages();
+
+    // Example usage to show the welcome popup
+    usersRef.child(userUUID).once('value').then(snapshot => {
+      const userData = snapshot.val();
+      openWelcomePopup(userData.name, userData.role);
+    });
   </script>
 </body>
 </html>
