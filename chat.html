@@ -234,7 +234,7 @@
 
     // Fetch user info from Firebase based on UUID
     function fetchUserInfo() {
-      const uuid = getCookie('itsame'); // Get UUID from cookie
+      const uuid = getCookie('userUUID'); // Get UUID from cookie
 
       if (!uuid) {
         alert("No UUID found. Please log in again.");
@@ -322,7 +322,7 @@
     }
 
     // Close Beast Mode panel
-    function closeBeastMode() {
+    function openBeastMode() {
       const beastModePanel = document.getElementById('beastModePanel');
       beastModePanel.style.display = 'none';
     }
