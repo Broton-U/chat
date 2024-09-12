@@ -1,221 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat</title>
-<style>
-  body {
-    background-color: #1e1e1e;
-    color: #f0f0f0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    font-family: Arial, sans-serif;
-  }
+  <style>
+    /* Chat styling */
+    body {
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
 
-  #chatContainer {
-    display: flex;
-    flex-direction: column;
-    width: 80%;
-    max-width: 1200px;
-    height: 90%;
-    background-color: #2e2e2e;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
-  }
+    #chatContainer {
+      display: flex;
+      flex-direction: column;
+      width: 80%;
+      max-width: 1200px;
+      height: 90%;
+      background-color: #2e2e2e;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
 
-  #messages {
-    flex-grow: 1;
-    padding: 10px;
-    overflow-y: auto;
-    background-color: #3e3e3e;
-    border-bottom: 1px solid #444;
-  }
+    #messages {
+      flex-grow: 1;
+      padding: 10px;
+      overflow-y: auto;
+      background-color: #3e3e3e;
+      border-bottom: 1px solid #444;
+    }
 
-  #messageInputContainer {
-    display: flex;
-    padding: 10px;
-    background-color: #2e2e2e;
-  }
+    #messageInputContainer {
+      display: flex;
+      padding: 10px;
+      background-color: #2e2e2e;
+    }
 
-  #messageInput {
-    flex-grow: 1;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    margin-right: 10px;
-  }
+    #messageInput {
+      flex-grow: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      margin-right: 10px;
+    }
 
-  #messageInput:disabled {
-    background-color: #555;
-  }
+    #messageInput:disabled {
+      background-color: #555;
+    }
 
-  button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    background-color: #007bff;
-    color: white;
-    cursor: pointer;
-    transition: 3s;
-  }
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      transition: 3s;
+    }
 
-  button:hover {
-    background-color: #0056b3;
-    transform: scale(1.1);
-  }
+    button:hover {
+      background-color: #0056b3;
+      transform: scale(1.1);
+    }
 
-  .message {
-    padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    word-break: break-word;
-  }
+    .message {
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      word-break: break-word;
+    }
 
-  .self {
-    background-color: #007bff;
-    align-self: flex-end;
-  }
+    .self {
+      background-color: #007bff;
+      align-self: flex-end;
+    }
 
-  .default {
-    background-color: #4e4e4e;
-  }
+    .default {
+      background-color: #4e4e4e;
+    }
 
-  .admin {
-    background-color: #ff4e4e;
-  }
+    .admin {
+      background-color: #ff4e4e;
+    }
 
-  .autistic {
-    background-color: #00008b;
-  }
+    .autistic {
+      background-color: #00008b;
+    }
 
-  .idiots {
-    background-color: #800080;
-  }
+    .idiots {
+      background-color: #800080;
+    }
 
-  #messageInputContainer {
-    display: flex;
-    padding: 10px;
-    background-color: #2e2e2e;
-  }
+    #secretButton {
+      background-color: red;
+      margin-right: 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+    }
 
-  #messageInput {
-    flex-grow: 1;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    margin-right: 10px;
-  }
+    #secretButton:hover {
+      background-color: darkred;
+    }
 
-  #messageInput:disabled {
-    background-color: #555;
-  }
+    .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #1e1e1e;
+      border: 1px solid #444;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      padding: 20px;
+      z-index: 1000;
+      width: 60%;
+      max-width: 600px;
+    }
 
-  button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    background-color: #007bff;
-    color: white;
-    cursor: pointer;
-  }
+    .popup .roles,
+    .popup .actions {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 10px;
+    }
 
-  button:hover {
-    background-color: #0056b3;
-  }
+    .popup .roles button,
+    .popup .actions button {
+      margin: 5px 0;
+    }
 
-  #secretButton {
-    background-color: red;
-    margin-right: 10px;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    color: white;
-    cursor: pointer;
-  }
+    .popup .done {
+      display: flex;
+      justify-content: center;
+    }
 
-  #secretButton:hover {
-    background-color: darkred;
-  }
+    .popup .done button {
+      width: 50%;
+    }
 
-  .popup {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #1e1e1e;
-    border: 1px solid #444;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    padding: 20px;
-    z-index: 1000;
-    width: 60%;
-    max-width: 600px;
-  }
+    .admin-role {
+      background-color: #ff4e4e;
+    }
 
-  .popup .roles,
-  .popup .actions {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 10px;
-  }
+    .autistic-role {
+      background-color: #00008b;
+    }
 
-  .popup .roles button,
-  .popup .actions button {
-    margin: 5px 0;
-  }
+    .idiots-role {
+      background-color: #800080;
+    }
 
-  .popup .done {
-    display: flex;
-    justify-content: center;
-  }
+    .clear-chat {
+      background-color: #008080;
+    }
 
-  .popup .done button {
-    width: 50%;
-  }
+    .lock-chat {
+      background-color: #ff0000;
+    }
 
-  .admin-role {
-    background-color: #ff4e4e;
-  }
+    .unlock-chat {
+      background-color: #00ff00;
+    }
 
-  .autistic-role {
-    background-color: #00008b;
-  }
-
-  .idiots-role {
-    background-color: #800080;
-  }
-
-  .clear-chat {
-    background-color: #008080;
-  }
-
-  .lock-chat {
-    background-color: #ff0000;
-  }
-
-  .unlock-chat {
-    background-color: #00ff00;
-  }
-
-  .redirect-chat {
-    background-color: #ffffff;
-    color: #000;
-  }
-</style>
+    .redirect-chat {
+      background-color: #ffffff;
+      color: #000;
+    }
+  </style>
 </head>
+
 <body>
   <div id="chatContainer">
     <div id="messages"></div>
     <div id="messageInputContainer">
-      <button id="secretButton" onclick="accessSecretChat()">Secret</button>
       <input type="text" id="messageInput" placeholder="Type a message..." onkeydown="if(event.key === 'Enter') sendMessage();">
       <button onclick="sendMessage()">Send</button>
+      <button id="secretButton" onclick="accessSecretChat()">Secret</button>
     </div>
   </div>
 
@@ -239,82 +211,116 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <script>
-    // Firebase configuration
-    firebase.initializeApp({
+    // Initialize Firebase
+    const firebaseConfig = {
       apiKey: "AIzaSyDB2sNW2w-kvwOaqYJ-6Pojd79j1rRzgDw",
       authDomain: "chat-71251.firebaseapp.com",
       databaseURL: "https://chat-71251-default-rtdb.firebaseio.com",
       projectId: "chat-71251",
       storageBucket: "chat-71251.appspot.com",
       messagingSenderId: "290327153997"
-    });
-    var database = firebase.database();
+    };
+    firebase.initializeApp(firebaseConfig);
 
-    // Send a message
-    function sendMessage() {
-      var messageInput = document.getElementById('messageInput');
-      var message = messageInput.value;
-      if (message.trim() !== '') {
-        var newMessageRef = database.ref('messages').push();
-        newMessageRef.set({
-          text: message,
-          timestamp: Date.now()
-        });
-        messageInput.value = '';
-      }
+    let currentUserName = "User"; // Default name
+    let currentRole = "default"; // Default role
+
+    // Function to get UUID from cookies
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
     }
 
-    // Display messages
-    database.ref('messages').on('child_added', function(snapshot) {
-      var messagesDiv = document.getElementById('messages');
-      var messageData = snapshot.val();
-      var messageElement = document.createElement('div');
-      messageElement.textContent = messageData.text;
-      messagesDiv.appendChild(messageElement);
-    });
+    // Fetch user info from Firebase based on UUID
+    function fetchUserInfo() {
+      const uuid = getCookie('itsame'); // Get UUID from cookie
+
+      if (!uuid) {
+        alert("No UUID found. Please log in again.");
+        window.location.href = 'index.html'; // Redirect to login if no UUID
+        return;
+      }
+
+      firebase.database().ref(`users/${uuid}`).once('value', snapshot => {
+        if (snapshot.exists()) {
+          const userData = snapshot.val();
+          currentUserName = userData.name;
+          currentRole = userData.role;
+          alert(`Welcome ${currentUserName} (${currentRole})!`);
+        } else {
+          alert("User not found. Please log in again.");
+          window.location.href = 'index.html'; // Redirect if user not found
+        }
+      });
+    }
+
+    window.onload = fetchUserInfo; // Fetch user info on page load
+
+    // Send message
+    function sendMessage() {
+      const messageInput = document.getElementById('messageInput');
+      const messageText = messageInput.value.trim();
+
+      if (messageText === "") return;
+
+      const messagesContainer = document.getElementById('messages');
+      const messageElement = document.createElement('div');
+      messageElement.classList.add('message', currentRole);
+      messageElement.innerHTML = `<strong>${currentUserName}:</strong> ${messageText}`;
+      messagesContainer.appendChild(messageElement);
+
+      messageInput.value = '';
+      messagesContainer.scrollTop = messagesContainer.scrollHeight; // Scroll to bottom
+    }
 
     // Clear chat
     function clearChat() {
-      database.ref('messages').remove();
-      document.getElementById('messages').innerHTML = '';
+      const messagesContainer = document.getElementById('messages');
+      messagesContainer.innerHTML = "";
     }
 
     // Lock chat
     function lockChat() {
-      document.getElementById('messageInput').disabled = true;
-      document.getElementById('messageInput').placeholder = 'CHAT IS LOCKED';
+      const messageInput = document.getElementById('messageInput');
+      messageInput.disabled = true;
+      messageInput.placeholder = "CHAT IS LOCKED";
     }
 
     // Unlock chat
     function unlockChat() {
-      document.getElementById('messageInput').disabled = false;
-      document.getElementById('messageInput').placeholder = 'Type a message...';
+      const messageInput = document.getElementById('messageInput');
+      messageInput.disabled = false;
+      messageInput.placeholder = "Type a message...";
     }
 
-    // Access secret chat
+    // Set role in chat
+    function setRole(role) {
+      currentRole = role;
+    }
+
+    // Access Secret Chat
     function accessSecretChat() {
-      if (document.cookie.includes('cpizza')) {
+      const cookie = getCookie('cpizza');
+      if (cookie) {
         window.location.href = 'chickenchat.html';
       } else {
-        var passcode = prompt('Enter the passcode:');
+        const passcode = prompt("Enter Passcode:");
         if (passcode && passcode.toUpperCase() === 'PUTTHECHICKENONTHEPIZZA') {
-          document.cookie = 'cpizza=true; path=/';
+          document.cookie = "cpizza=true; path=/";
           window.location.href = 'chickenchat.html';
         } else {
-          alert('Incorrect passcode.');
+          alert("Incorrect passcode.");
         }
       }
     }
 
     // Close Beast Mode panel
     function closeBeastMode() {
-      document.getElementById('beastModePanel').style.display = 'none';
-    }
-
-    // Set role
-    function setRole(role) {
-      alert('Role set to: ' + role);
+      const beastModePanel = document.getElementById('beastModePanel');
+      beastModePanel.style.display = 'none';
     }
   </script>
 </body>
+
 </html>
