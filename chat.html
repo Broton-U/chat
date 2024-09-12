@@ -53,6 +53,7 @@
           messageElement.className = 'message';
           messageElement.style.backgroundColor = getRoleColor(message.role);
           messageElement.innerHTML = `
+            <div class="name">${message.name}</div>
             <div class="text">${message.text}</div>
           `;
           messagesDiv.appendChild(messageElement);
@@ -160,7 +161,15 @@
 
       // Show popup only if last login was not today
       if (!lastLogin || lastLoginDate.toDateString() !== now.toDateString()) {
-        document.getElementById('welcomeMessage').style.display = 'flex';
+        welcomeRef.once('value').then(snapshot => {
+          const welcomeData = snapshot.val();
+          const role = getCookie('role') || 'default';
+          const name = getCookie('name') || 'Anonymous';
+          document.getElementById('welcomeMessage').style.display = 'flex';
+          document.querySelector('#welcomeMessage .role').textContent = role;
+          document.querySelector('#welcomeMessage .name').textContent = `Welcome, ${name}`;
+          document.querySelector('#welcomeMessage').style.borderColor = getRoleColor(role);
+        });
       }
     }
 
